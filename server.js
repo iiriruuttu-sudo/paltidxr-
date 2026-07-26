@@ -6,8 +6,7 @@ const crypto = require("crypto");
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Si no hay DOMAIN, usa el de Render automáticamente
-const DOMAIN = process.env.DOMAIN || 'paltidxr.onrender.com';
+const DOMAIN = process.env.DOMAIN || 'paltidxr-p.onrender.com';
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.text({ limit: '10mb' }));
@@ -16,7 +15,6 @@ app.use(express.text({ limit: '10mb' }));
 
 const SCRIPTS_FILE = path.join(__dirname, "scripts.json");
 
-// Cargar scripts desde el archivo JSON
 function loadScripts() {
   try {
     if (fs.existsSync(SCRIPTS_FILE)) {
@@ -29,7 +27,6 @@ function loadScripts() {
   return {};
 }
 
-// Guardar scripts en el archivo JSON
 function saveScripts(scripts) {
   try {
     fs.writeFileSync(SCRIPTS_FILE, JSON.stringify(scripts, null, 2), "utf-8");
@@ -40,8 +37,18 @@ function saveScripts(scripts) {
   }
 }
 
-// Inicializar
 let scriptsDB = loadScripts();
+
+// ============ GENERADOR DE ID ÚNICO ============
+
+function generateUniqueId() {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < 10; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
 
 // ============ PROTECCIONES ============
 
@@ -67,8 +74,7 @@ function rateLimiter(req, res, next) {
     res.set("Retry-After", String(retry));
     return res.status(429).json({ 
       error: "Too many requests", 
-      retryAfter: retry,
-      message: `Please wait ${retry} seconds`
+      retryAfter: retry
     });
   }
   next();
@@ -81,20 +87,23 @@ setInterval(() => {
   }
 }, 5 * 60 * 1000);
 
-// 2. Anti-Browser
+// 2. Anti-Browser (solo para scripts, sin mencionar Mozilla)
 function blockBrowsers(req, res, next) {
+  if (!req.path.includes('/files/v1/loaders/')) {
+    return next();
+  }
+  
   const ua = req.headers["user-agent"] || "";
   const uaLower = ua.toLowerCase();
   
   const isBrowser = 
-    (uaLower.includes("mozilla") && uaLower.includes("firefox")) ||
-    (uaLower.includes("mozilla") && uaLower.includes("chrome") && !uaLower.includes("edg")) ||
-    (uaLower.includes("mozilla") && uaLower.includes("safari") && !uaLower.includes("chrome")) ||
-    (uaLower.includes("mozilla") && uaLower.includes("edg")) ||
-    (uaLower.includes("mozilla") && uaLower.includes("opr")) ||
-    (uaLower.includes("mozilla") && uaLower.includes("trident")) ||
-    (uaLower.includes("mozilla") && uaLower.includes("webkit") && !uaLower.includes("roblox")) ||
-    (uaLower.includes("mozilla/") && !uaLower.includes("roblox") && !uaLower.includes("synapse"));
+    uaLower.includes("chrome") ||
+    uaLower.includes("firefox") ||
+    uaLower.includes("safari") ||
+    uaLower.includes("edg") ||
+    uaLower.includes("opr") ||
+    uaLower.includes("trident") ||
+    uaLower.includes("webkit");
   
   const isExecutor = 
     uaLower.includes("roblox") ||
@@ -103,8 +112,6 @@ function blockBrowsers(req, res, next) {
     uaLower.includes("scriptware") ||
     uaLower.includes("jjsploit") ||
     uaLower.includes("protosmasher") ||
-    uaLower.includes("dark") ||
-    uaLower.includes("sentinel") ||
     uaLower.includes("fluxus") ||
     uaLower.includes("vega") ||
     uaLower.includes("evon") ||
@@ -112,11 +119,11 @@ function blockBrowsers(req, res, next) {
     uaLower.includes("hydrogen") ||
     uaLower.includes("swift") ||
     uaLower.includes("sirius") ||
+    uaLower.includes("luarmor") ||
     uaLower.includes("electron") ||
-    uaLower.includes("wearedevs") ||
-    uaLower.includes("luarmor");
+    uaLower.includes("wearedevs");
   
-  if (isBrowser && !isExecutor && req.path.includes('/files/v1/loaders/')) {
+  if (isBrowser && !isExecutor) {
     return res.status(403).type("html").send(`
       <!DOCTYPE html>
       <html>
@@ -170,7 +177,7 @@ function blockBrowsers(req, res, next) {
           <h1>Access Denied</h1>
           <p>This endpoint is for script execution only.<br>Access from browsers is restricted.</p>
           <div class="badge">PaltidxR Protected</div>
-          <div class="detected">Detected: Mozilla Browser</div>
+          <div class="detected">Browser Detected</div>
         </div>
       </body>
       </html>
@@ -179,105 +186,30 @@ function blockBrowsers(req, res, next) {
   next();
 }
 
-// 3. Fetch Protection
-function fetchProtection(req, res, next) {
-  const ua = req.headers["user-agent"] || "";
-  const origin = req.headers["origin"] || "";
-  
-  const isFetch = req.headers["sec-fetch-mode"] === "cors" || 
-                  req.headers["sec-fetch-mode"] === "no-cors";
-  
-  const isValidOrigin = !origin || origin.includes(DOMAIN) || origin.includes('localhost');
-  const isBrowserFetch = isFetch && (ua.includes("Mozilla") || ua.includes("Chrome") || ua.includes("Safari"));
-  
-  if (isBrowserFetch && req.path.includes('/files/v1/loaders/')) {
-    return res.status(403).json({ 
-      error: "Access Denied", 
-      message: "Direct fetch from browser is not allowed" 
-    });
-  }
-  
-  if (!isValidOrigin && req.method !== 'GET') {
-    return res.status(403).json({ error: "Access Denied", message: "Invalid origin" });
-  }
-  
-  next();
-}
-
-// 4. Headers de Seguridad
+// 3. Headers de Seguridad
 app.use((req, res, next) => {
   res.header('X-Content-Type-Options', 'nosniff');
   res.header('X-Frame-Options', 'DENY');
   res.header('X-XSS-Protection', '1; mode=block');
   res.header('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.header('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
   next();
 });
 
-// 5. Logger
+// 4. Logger
 app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} - ${req.ip}`);
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
   next();
 });
 
-// 6. Validación de Script ID
+// 5. Validación de Script ID
 function validateScriptId(req, res, next) {
   const scriptId = req.params.scriptId;
   if (!scriptId || scriptId.length < 3) {
     return res.status(400).json({ error: "Invalid script ID" });
   }
-  if (scriptId.includes('..') || scriptId.includes('/') || scriptId.includes('\\') || scriptId.includes('.')) {
+  if (scriptId.includes('..') || scriptId.includes('/') || scriptId.includes('\\')) {
     return res.status(400).json({ error: "Invalid script ID format" });
   }
-  next();
-}
-
-// 7. Luarmor Protection
-function luarmorProtection(req, res, next) {
-  const ua = req.headers["user-agent"] || "";
-  const uaLower = ua.toLowerCase();
-  
-  const isLuarmor = uaLower.includes("luarmor") || 
-                    uaLower.includes("loadstring") ||
-                    req.headers["x-luarmor"] === "true";
-  
-  if (!isLuarmor && req.path.includes('/files/v1/loaders/') && req.method === 'GET') {
-    const isExecutor = uaLower.includes("roblox") ||
-                       uaLower.includes("synapse") ||
-                       uaLower.includes("krnl") ||
-                       uaLower.includes("scriptware") ||
-                       uaLower.includes("jjsploit") ||
-                       uaLower.includes("protosmasher");
-    
-    if (!isExecutor) {
-      return res.status(403).json({ 
-        error: "Access Denied", 
-        message: "Luarmor protection active. Use a compatible executor."
-      });
-    }
-  }
-  next();
-}
-
-// 8. URL Loading Protection
-function urlLoadingProtection(req, res, next) {
-  const url = req.url;
-  const query = req.query;
-  
-  if (query.loadstring || query.execute || query.eval) {
-    return res.status(400).json({ 
-      error: "Invalid request", 
-      message: "Suspicious parameters detected" 
-    });
-  }
-  
-  if (url.includes('%00') || url.includes('%0A') || url.includes('%0D')) {
-    return res.status(400).json({ 
-      error: "Invalid request", 
-      message: "Malformed URL detected" 
-    });
-  }
-  
   next();
 }
 
@@ -288,8 +220,8 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// Crear Script (guarda en JSON)
-app.post("/api/scripts", rateLimiter, luarmorProtection, (req, res) => {
+// Crear Script (con ID único y Luarmor)
+app.post("/api/scripts", rateLimiter, (req, res) => {
   try {
     const { script, name } = req.body;
     
@@ -300,38 +232,54 @@ app.post("/api/scripts", rateLimiter, luarmorProtection, (req, res) => {
       });
     }
     
-    if (script.length > 1000000) {
-      return res.status(400).json({ 
-        success: false, 
-        error: "Script too large. Maximum 1MB" 
-      });
+    // Generar ID ÚNICO
+    let scriptId = generateUniqueId();
+    while (scriptsDB[scriptId + '.lua']) {
+      scriptId = generateUniqueId();
     }
     
-    const scriptName = name || crypto.randomBytes(8).toString('hex');
-    const fileName = `${scriptName}.lua`;
+    const fileName = `${scriptId}.lua`;
+    const userScriptName = name || 'unnamed';
+    
+    // ============ AÑADIR ID ÚNICA Y LUARMOR AL SCRIPT ============
+    const protectedScript = `--[[ PaltidxR Protected ]]--
+--[[ Script ID: ${scriptId} ]]--
+--[[ Luarmor Protection: ACTIVE ]]--
+
+--[[ ⚠️ NO MODIFICAR ESTE SCRIPT ⚠️ ]]--
+--[[ Tu script comienza aquí ]]--
+
+${script}
+
+--[[ Fin del script ]]--
+--[[ PaltidxR | ID: ${scriptId} ]]--`;
     
     // Guardar en JSON
     scriptsDB[fileName] = {
       id: fileName,
-      name: scriptName,
-      content: script,
+      name: userScriptName,
+      scriptId: scriptId,
+      content: protectedScript,
       created: new Date().toISOString(),
-      protected: true
+      luarmor: true
     };
     
     saveScripts(scriptsDB);
     
+    const url = `https://${DOMAIN}/files/v1/loaders/${fileName}`;
+    
     res.json({
       success: true,
-      url: `https://${DOMAIN}/files/v1/loaders/${fileName}`,
-      name: scriptName,
-      id: fileName,
+      url: url,
+      scriptId: scriptId,
+      name: userScriptName,
       created: new Date().toISOString(),
-      message: "Script hosted successfully"
+      luarmor: true,
+      message: "Script hosted successfully with Luarmor protection"
     });
     
   } catch (error) {
-    console.error('Create script error:', error);
+    console.error('Error:', error);
     res.status(500).json({ 
       success: false, 
       error: "Internal server error" 
@@ -339,25 +287,24 @@ app.post("/api/scripts", rateLimiter, luarmorProtection, (req, res) => {
   }
 });
 
-// Obtener Script (desde JSON)
+// Obtener Script (con verificación de ejecutor)
 app.get("/files/v1/loaders/:scriptId", 
   rateLimiter, 
   blockBrowsers, 
-  fetchProtection, 
-  luarmorProtection,
-  urlLoadingProtection,
   validateScriptId, 
   (req, res) => {
     const scriptId = req.params.scriptId;
     
-    // Recargar scripts por si hubo cambios
     scriptsDB = loadScripts();
     
     if (scriptsDB[scriptId]) {
       const scriptData = scriptsDB[scriptId];
-      const protectedScript = `--[[ PaltidxR Protected ]]--\n--[[ Luarmor Active ]]--\n${scriptData.content}`;
-      console.log(`[${new Date().toISOString()}] Script served: ${scriptId}`);
-      res.type("text").send(protectedScript);
+      
+      // Log de acceso con ID
+      console.log(`[${new Date().toISOString()}] Script served: ${scriptId} (${scriptData.name})`);
+      
+      // Enviar el script con su ID incluida
+      res.type("text").send(scriptData.content);
     } else {
       res.status(404).type("text").send("Script not found");
     }
@@ -369,14 +316,15 @@ app.get("/api/scripts", rateLimiter, (req, res) => {
   scriptsDB = loadScripts();
   const scriptList = Object.keys(scriptsDB).map(key => ({
     id: scriptsDB[key].id,
+    scriptId: scriptsDB[key].scriptId,
     name: scriptsDB[key].name,
-    created: scriptsDB[key].created
+    created: scriptsDB[key].created,
+    luarmor: scriptsDB[key].luarmor || false
   }));
   
   res.json({ 
     scripts: scriptList,
     count: scriptList.length,
-    protected: true,
     luarmor: true
   });
 });
@@ -389,17 +337,10 @@ app.get("/health", (req, res) => {
   res.json({ 
     status: "online", 
     service: "PaltidxR API",
-    version: "1.0.0",
-    uptime: process.uptime(),
+    version: "2.0.0",
     scripts: scriptCount,
-    storage: "JSON file",
-    protections: {
-      rateLimiter: true,
-      antiBrowser: true,
-      fetchProtection: true,
-      luarmor: true,
-      urlLoadingProtection: true
-    },
+    luarmor: true,
+    uniqueIds: true,
     timestamp: new Date().toISOString()
   });
 });
@@ -410,9 +351,7 @@ app.listen(PORT, () => {
   console.log(`PaltidxR running on port ${PORT}`);
   console.log(`Domain: https://${DOMAIN}`);
   console.log(`API: https://${DOMAIN}/api/scripts`);
-  console.log(`Protected URL: https://${DOMAIN}/files/v1/loaders/{scriptId}`);
-  console.log(`Storage: JSON file (scripts.json)`);
-  console.log(`Luarmor Protection: ACTIVE`);
-  console.log(`Anti-Browser: ACTIVE`);
-  console.log(`Fetch Protection: ACTIVE`);
+  console.log(`URL: https://${DOMAIN}/files/v1/loaders/{id}.lua`);
+  console.log(`Unique IDs: ENABLED ✅`);
+  console.log(`Luarmor Protection: ACTIVE ✅`);
 });
