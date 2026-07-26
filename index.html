@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PaltidxR - Secure Script Obfuscation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #0a0b12;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            color: #e0e0e0;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #0a0b12 0%, #14151f 50%, #0a0b12 100%);
+        }
+        
+        .glass-card {
+            background: rgba(20, 21, 31, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+        }
+        
+        .glass-input {
+            background: rgba(9, 10, 18, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            color: #e0e0e0;
+        }
+        
+        .glass-input:focus {
+            border-color: rgba(139, 92, 246, 0.4);
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.05);
+            outline: none;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #6d4fc7, #4a3f7a);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(139, 92, 246, 0.2);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(109, 79, 199, 0.3);
+            border-color: rgba(139, 92, 246, 0.4);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+        
+        .code-editor {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 13px;
+            line-height: 1.8;
+            min-height: 300px;
+            resize: vertical;
+            tab-size: 4;
+        }
+        
+        .glow-effect {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .glow-effect::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.03) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+        
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+        
+        .status-dot.online {
+            background: #34d399;
+            box-shadow: 0 0 20px rgba(52, 211, 153, 0.3);
+        }
+        
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .token-badge {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 8px;
+            padding: 4px 12px;
+            font-size: 11px;
+            color: #a78bfa;
+            font-weight: 500;
+        }
+        
+        .upload-zone {
+            border: 2px dashed rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .upload-zone:hover {
+            border-color: rgba(139, 92, 246, 0.3);
+            background: rgba(139, 92, 246, 0.02);
+        }
+        
+        .upload-zone.dragover {
+            border-color: #6d4fc7;
+            background: rgba(109, 79, 199, 0.05);
+        }
+        
+        .feature-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background: rgba(139, 92, 246, 0.08);
+            border: 1px solid rgba(139, 92, 246, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #a78bfa;
+        }
+        
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(139, 92, 246, 0.3);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(139, 92, 246, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="border-b border-white/5 sticky top-0 z-50" style="background: rgba(10, 11, 18, 0.9); backdrop-filter: blur(20px);">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-lg bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center">
+                        <i class="fa-solid fa-shield-halved text-indigo-400 text-sm"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-white font-bold text-lg tracking-tight">PaltidxR</h1>
+                        <p class="text-zinc-500 text-[10px] -mt-0.5">Secure Obfuscation</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <span class="status-dot online"></span>
+                        <span class="text-xs text-zinc-400">API Online</span>
+                    </div>
+                    <div class="token-badge">
+                        <i class="fa-solid fa-key text-[10px] mr-1"></i>
+                        Bonus Tokens: 10
+                    </div>
+                    <button class="btn-secondary text-xs px-4 py-1.5 rounded-lg text-zinc-300">
+                        <i class="fa-regular fa-user mr-1.5"></i>
+                        Login
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Left Panel - Features -->
+            <div class="lg:col-span-1 space-y-4">
+                <div class="glass-card p-6 glow-effect relative">
+                    <h3 class="text-sm font-semibold text-white mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-bolt text-indigo-400"></i>
+                        Quick Actions
+                    </h3>
+                    
+                    <div class="space-y-3">
+                        <button class="w-full btn-secondary text-sm py-2.5 px-4 rounded-xl text-zinc-300 flex items-center justify-between group">
+                            <span><i class="fa-regular fa-file-code mr-2"></i>New Script</span>
+                            <i class="fa-solid fa-arrow-right text-zinc-600 group-hover:text-indigo-400 transition-colors text-xs"></i>
+                        </button>
+                        <button class="w-full btn-secondary text-sm py-2.5 px-4 rounded-xl text-zinc-300 flex items-center justify-between group">
+                            <span><i class="fa-regular fa-folder-open mr-2"></i>My Scripts</span>
+                            <i class="fa-solid fa-arrow-right text-zinc-600 group-hover:text-indigo-400 transition-colors text-xs"></i>
+                        </button>
+                        <button class="w-full btn-secondary text-sm py-2.5 px-4 rounded-xl text-zinc-300 flex items-center justify-between group">
+                            <span><i class="fa-regular fa-clock mr-2"></i>History</span>
+                            <i class="fa-solid fa-arrow-right text-zinc-600 group-hover:text-indigo-400 transition-colors text-xs"></i>
+                        </button>
+                    </div>
+                    
+                    <hr class="border-white/5 my-4" />
+                    
+                    <h3 class="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                        <i class="fa-solid fa-shield text-indigo-400"></i>
+                        Protection Stats
+                    </h3>
+                    
+                    <div class="space-y-2 text-xs">
+                        <div class="flex justify-between items-center">
+                            <span class="text-zinc-400">Scripts Protected</span>
+                            <span class="text-white font-medium">1,247</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-zinc-400">API Requests</span>
+                            <span class="text-white font-medium">84.2K</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-zinc-400">Uptime</span>
+                            <span class="text-emerald-400 font-medium">99.98%</span>
+                        </div>
+                    </div>
+                    
+                    <hr class="border-white/5 my-4" />
+                    
+                    <div class="bg-indigo-600/5 border border-indigo-500/10 rounded-xl p-4">
+                        <div class="flex items-start gap-3">
+                            <i class="fa-solid fa-gift text-indigo-400 text-sm mt-0.5"></i>
+                            <div>
+                                <p class="text-xs text-zinc-300">Bonus Tokens Available</p>
+                                <p class="text-lg font-bold text-white">10 <span class="text-xs font-normal text-zinc-400">tokens</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Center Panel - Script Editor -->
+            <div class="lg:col-span-2">
+                <div class="glass-card p-6 glow-effect relative">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h2 class="text-white font-semibold text-lg">Script Obfuscator</h2>
+                            <p class="text-zinc-500 text-xs">Protect your code with advanced encryption</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-zinc-500">URL Name:</span>
+                            <input type="text" id="urlName" placeholder="my-script" 
+                                   class="glass-input text-xs px-3 py-1.5 w-32" />
+                        </div>
+                    </div>
+                    
+                    <!-- Upload & Editor -->
+                    <div class="relative">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-zinc-400">Script Code</span>
+                                <span class="text-[10px] text-zinc-600">Lua, JavaScript, Python</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <label for="fileUpload" class="btn-secondary text-xs px-3 py-1.5 rounded-lg text-zinc-300 cursor-pointer hover:text-white transition-colors">
+                                    <i class="fa-solid fa-upload mr-1.5"></i>
+                                    Upload
+                                </label>
+                                <input type="file" id="fileUpload" accept=".lua,.js,.py,.txt" class="hidden" />
+                                <span class="text-[10px] text-zinc-600">or paste below</span>
+                            </div>
+                        </div>
+                        
+                        <textarea id="scriptInput" class="glass-input code-editor w-full p-4" 
+                                  placeholder="-- Paste your script here to obfuscate&#10;-- Supports Lua, JavaScript, Python, and more&#10;&#10;local function hello()&#10;    print(&#39;Hello World!&#39;)&#10;end&#10;&#10;hello()"
+                                  spellcheck="false"></textarea>
+                    </div>
+                    
+                    <!-- Options -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
+                        <label class="flex items-center gap-2 text-xs text-zinc-400 cursor-pointer">
+                            <input type="checkbox" checked class="accent-indigo-500" />
+                            String Encryption
+                        </label>
+                        <label class="flex items-center gap-2 text-xs text-zinc-400 cursor-pointer">
+                            <input type="checkbox" checked class="accent-indigo-500" />
+                            Control Flow
+                        </label>
+                        <label class="flex items-center gap-2 text-xs text-zinc-400 cursor-pointer">
+                            <input type="checkbox" class="accent-indigo-500" />
+                            Dead Code
+                        </label>
+                        <label class="flex items-center gap-2 text-xs text-zinc-400 cursor-pointer">
+                            <input type="checkbox" class="accent-indigo-500" />
+                            Anti-Decompile
+                        </label>
+                    </div>
+                    
+                    <!-- Create URL Button -->
+                    <button id="createUrlBtn" class="btn-primary w-full mt-4 py-3 rounded-xl text-white font-medium text-sm flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-link"></i>
+                        Create Protected URL
+                    </button>
+                    
+                    <!-- Result Area -->
+                    <div id="resultArea" class="mt-4 hidden">
+                        <div class="bg-emerald-600/5 border border-emerald-500/20 rounded-xl p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs text-emerald-400 font-medium">Script Protected Successfully!</p>
+                                    <p class="text-xs text-zinc-400 mt-1">Your URL is ready to use</p>
+                                </div>
+                                <button onclick="copyUrl()" class="btn-secondary text-xs px-3 py-1.5 rounded-lg text-zinc-300">
+                                    <i class="fa-regular fa-copy mr-1.5"></i>
+                                    Copy
+                                </button>
+                            </div>
+                            <div class="mt-2 bg-black/30 rounded-lg p-3">
+                                <code id="generatedUrl" class="text-xs text-zinc-300 break-all font-mono"></code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Features Section -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
+            <div class="glass-card p-4 flex items-center gap-3">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-lock"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-white">AES-256</p>
+                    <p class="text-[10px] text-zinc-500">Military-grade encryption</p>
+                </div>
+            </div>
+            <div class="glass-card p-4 flex items-center gap-3">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-bolt"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-white">Fast CDN</p>
+                    <p class="text-[10px] text-zinc-500">Global distribution</p>
+                </div>
+            </div>
+            <div class="glass-card p-4 flex items-center gap-3">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-white">Anti-Tamper</p>
+                    <p class="text-[10px] text-zinc-500">Protection against modification</p>
+                </div>
+            </div>
+            <div class="glass-card p-4 flex items-center gap-3">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-infinity"></i>
+                </div>
+                <div>
+                    <p class="text-xs font-medium text-white">Unlimited</p>
+                    <p class="text-[10px] text-zinc-500">No restrictions</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // File Upload Handler
+        document.getElementById('fileUpload').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    document.getElementById('scriptInput').value = event.target.result;
+                };
+                reader.readAsText(file);
+            }
+        });
+        
+        // Drag and Drop
+        const textarea = document.getElementById('scriptInput');
+        textarea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('dragover');
+        });
+        
+        textarea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+        });
+        
+        textarea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    document.getElementById('scriptInput').value = event.target.result;
+                };
+                reader.readAsText(files[0]);
+            }
+        });
+        
+        // Create URL Handler
+        document.getElementById('createUrlBtn').addEventListener('click', function() {
+            const script = document.getElementById('scriptInput').value.trim();
+            const urlName = document.getElementById('urlName').value.trim() || 'my-script';
+            
+            if (!script) {
+                alert('Please paste or upload a script first.');
+                return;
+            }
+            
+            // Simulate API call
+            const domain = 'obf.sibahtools.my.id';
+            const scriptId = 'Z1KsSr8XStRoHkLYE6gT'; // This would come from the server
+            
+            const generatedUrl = `https://${domain}/files/v1/loaders/${scriptId}.lua`;
+            
+            document.getElementById('generatedUrl').textContent = generatedUrl;
+            document.getElementById('resultArea').classList.remove('hidden');
+            
+            // Show success animation
+            this.innerHTML = '<i class="fa-solid fa-check"></i> URL Created!';
+            setTimeout(() => {
+                this.innerHTML = '<i class="fa-solid fa-link"></i> Create Protected URL';
+            }, 3000);
+        });
+        
+        // Copy URL
+        function copyUrl() {
+            const url = document.getElementById('generatedUrl').textContent;
+            navigator.clipboard.writeText(url).then(() => {
+                const btn = document.querySelector('#resultArea button');
+                btn.innerHTML = '<i class="fa-solid fa-check mr-1.5"></i> Copied!';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="fa-regular fa-copy mr-1.5"></i> Copy';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
