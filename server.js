@@ -5,14 +5,12 @@ const crypto = require("crypto");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
 const DOMAIN = process.env.DOMAIN || 'paltidxr-p.onrender.com';
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.text({ limit: '10mb' }));
 
 // ============ BASE DE DATOS EN JSON ============
-
 const SCRIPTS_FILE = path.join(__dirname, "scripts.json");
 
 function loadScripts() {
@@ -40,7 +38,6 @@ function saveScripts(scripts) {
 let scriptsDB = loadScripts();
 
 // ============ GENERADOR DE ID ÚNICO ============
-
 function generateUniqueId() {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
@@ -50,9 +47,7 @@ function generateUniqueId() {
   return result;
 }
 
-// ============ PROTECCIONES ============
-
-// 1. Rate Limiter
+// ============ RATE LIMITER ============
 const hits = new Map();
 const WINDOW = 15 * 60 * 1000;
 const MAX = 100;
@@ -72,10 +67,7 @@ function rateLimiter(req, res, next) {
   if (r.count > MAX) {
     const retry = Math.ceil((WINDOW - (now - r.start)) / 1000);
     res.set("Retry-After", String(retry));
-    return res.status(429).json({ 
-      error: "Too many requests", 
-      retryAfter: retry
-    });
+    return res.status(429).json({ error: "Too many requests", retryAfter: retry });
   }
   next();
 }
@@ -87,15 +79,16 @@ setInterval(() => {
   }
 }, 5 * 60 * 1000);
 
-// 2. Anti-Browser - NUEVA PÁGINA DE BLOQUEO
+// ============ ANTI-BROWSER CORREGIDO ============
 function blockBrowsers(req, res, next) {
   if (!req.path.includes('/files/v1/loaders/')) {
     return next();
   }
-  
+
   const ua = req.headers["user-agent"] || "";
   const uaLower = ua.toLowerCase();
-  
+
+  // Detectar navegadores
   const isBrowser = 
     uaLower.includes("chrome") ||
     uaLower.includes("firefox") ||
@@ -104,7 +97,8 @@ function blockBrowsers(req, res, next) {
     uaLower.includes("opr") ||
     uaLower.includes("trident") ||
     uaLower.includes("webkit");
-  
+
+  // Detectar ejecutores (Roblox, Synapse, Krnl, etc.)
   const isExecutor = 
     uaLower.includes("roblox") ||
     uaLower.includes("synapse") ||
@@ -121,12 +115,17 @@ function blockBrowsers(req, res, next) {
     uaLower.includes("sirius") ||
     uaLower.includes("paltidxr") ||
     uaLower.includes("electron") ||
-    uaLower.includes("wearedevs");
-  
-  if (isBrowser && !isExecutor) {
+    uaLower.includes("wearedevs") ||
+    uaLower.includes("luarmor");
+
+  // Si no tiene User-Agent o está vacío, asumir que es un ejecutor
+  const isUnknown = !ua || ua.length < 5;
+
+  // Si es navegador Y NO es ejecutor Y NO es desconocido → BLOQUEAR
+  if (isBrowser && !isExecutor && !isUnknown) {
     return res.status(403).type("html").send(`
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -156,17 +155,8 @@ function blockBrowsers(req, res, next) {
             text-align: center;
         }
         .icon { font-size: 72px; margin-bottom: 16px; }
-        h1 {
-            font-size: 24px;
-            font-weight: 700;
-            color: #ffffff;
-            margin-bottom: 8px;
-        }
-        .subtitle {
-            color: #888;
-            font-size: 14px;
-            margin-bottom: 24px;
-        }
+        h1 { font-size: 24px; font-weight: 700; color: #ffffff; margin-bottom: 8px; }
+        .subtitle { color: #888; font-size: 14px; margin-bottom: 24px; }
         .code-box {
             background: rgba(9, 10, 18, 0.9);
             border: 1px solid rgba(255, 255, 255, 0.06);
@@ -179,7 +169,6 @@ function blockBrowsers(req, res, next) {
             white-space: pre-wrap;
             word-break: break-all;
             line-height: 1.6;
-            position: relative;
         }
         .btn-copy {
             background: rgba(255, 255, 255, 0.06);
@@ -213,9 +202,7 @@ function blockBrowsers(req, res, next) {
             color: #a78bfa;
             text-decoration: none;
         }
-        .footer-link a:hover {
-            text-decoration: underline;
-        }
+        .footer-link a:hover { text-decoration: underline; }
         .badge {
             display: inline-block;
             margin-top: 12px;
@@ -256,7 +243,7 @@ function blockBrowsers(req, res, next) {
         <div class="badge">Browser Detected</div>
 
         <div class="code-box" id="codeDisplay">
-            loadstring(game:HttpGet("https://paltidxr-p.onrender.com/files/v1/loaders/script.lua", true))()
+            loadstring(game:HttpGet("https://${DOMAIN}/files/v1/loaders/script.lua", true))()
         </div>
 
         <button class="btn-copy" id="copyBtn" onclick="copyCode()">
@@ -267,7 +254,7 @@ function blockBrowsers(req, res, next) {
         <div class="footer-link">
             This code has been protected by API hosting protection.<br>
             If you want to protect your code too, go to<br>
-            <a href="https://paltidxr-p.onrender.com" target="_blank">https://paltidxr-p.onrender.com</a>
+            <a href="https://${DOMAIN}" target="_blank">https://${DOMAIN}</a>
         </div>
     </div>
 
@@ -277,7 +264,7 @@ function blockBrowsers(req, res, next) {
     </div>
 
     <script>
-        const codeToCopy = \`loadstring(game:HttpGet("https://paltidxr-p.onrender.com/files/v1/loaders/script.lua", true))()\`;
+        const codeToCopy = \`loadstring(game:HttpGet("https://${DOMAIN}/files/v1/loaders/script.lua", true))()\`;
 
         function copyCode() {
             navigator.clipboard.writeText(codeToCopy).then(() => {
@@ -312,25 +299,29 @@ function blockBrowsers(req, res, next) {
 </html>
     `);
   }
+
   next();
 }
 
-// 3. Headers de Seguridad
+// ============ HEADERS DE SEGURIDAD ============
 app.use((req, res, next) => {
   res.header('X-Content-Type-Options', 'nosniff');
   res.header('X-Frame-Options', 'DENY');
   res.header('X-XSS-Protection', '1; mode=block');
   res.header('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
   next();
 });
 
-// 4. Logger
+// ============ LOGGER ============
 app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} - UA: ${req.headers['user-agent'] || 'Unknown'}`);
   next();
 });
 
-// 5. Validación de Script ID
+// ============ VALIDACIÓN DE SCRIPT ID ============
 function validateScriptId(req, res, next) {
   const scriptId = req.params.scriptId;
   if (!scriptId || scriptId.length < 3) {
@@ -349,23 +340,17 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// Crear Script (con ID único y PaltidxR)
+// Crear Script
 app.post("/api/scripts", rateLimiter, (req, res) => {
   try {
     const { script, name } = req.body;
     
     if (!script || script.length < 10) {
-      return res.status(400).json({ 
-        success: false, 
-        error: "Script too short or empty" 
-      });
+      return res.status(400).json({ success: false, error: "Script too short or empty" });
     }
     
     if (script.length > 1000000) {
-      return res.status(400).json({ 
-        success: false, 
-        error: "Script too large. Maximum 1MB" 
-      });
+      return res.status(400).json({ success: false, error: "Script too large. Maximum 1MB" });
     }
     
     let scriptId = generateUniqueId();
@@ -413,14 +398,11 @@ ${script}
     
   } catch (error) {
     console.error('Error:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: "Internal server error" 
-    });
+    res.status(500).json({ success: false, error: "Internal server error" });
   }
 });
 
-// Obtener Script
+// ============ OBTENER SCRIPT ============
 app.get("/files/v1/loaders/:scriptId", 
   rateLimiter, 
   blockBrowsers, 
@@ -432,9 +414,10 @@ app.get("/files/v1/loaders/:scriptId",
     
     if (scriptsDB[scriptId]) {
       const scriptData = scriptsDB[scriptId];
-      console.log(`[${new Date().toISOString()}] Script served: ${scriptId} (${scriptData.name})`);
+      console.log(`[${new Date().toISOString()}] ✅ Script served: ${scriptId} (${scriptData.name})`);
       res.type("text").send(scriptData.content);
     } else {
+      console.log(`[${new Date().toISOString()}] ❌ Script not found: ${scriptId}`);
       res.status(404).type("text").send("Script not found");
     }
   }
@@ -475,12 +458,16 @@ app.get("/health", (req, res) => {
 });
 
 // ============ INICIALIZACIÓN ============
+if (!fs.existsSync(path.join(__dirname, "scripts"))) {
+  fs.mkdirSync(path.join(__dirname, "scripts"));
+}
 
 app.listen(PORT, () => {
-  console.log(`PaltidxR running on port ${PORT}`);
-  console.log(`Domain: https://${DOMAIN}`);
-  console.log(`API: https://${DOMAIN}/api/scripts`);
-  console.log(`URL: https://${DOMAIN}/files/v1/loaders/{id}.lua`);
-  console.log(`Unique IDs: ENABLED ✅`);
-  console.log(`PaltidxR Protection: ACTIVE ✅`);
+  console.log(`✅ PaltidxR running on port ${PORT}`);
+  console.log(`✅ Domain: https://${DOMAIN}`);
+  console.log(`✅ API: https://${DOMAIN}/api/scripts`);
+  console.log(`✅ URL: https://${DOMAIN}/files/v1/loaders/{id}.lua`);
+  console.log(`✅ Unique IDs: ENABLED`);
+  console.log(`✅ PaltidxR Protection: ACTIVE`);
+  console.log(`✅ Anti-Browser: ACTIVE (executors allowed)`);
 });
