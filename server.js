@@ -232,6 +232,13 @@ app.post("/api/scripts", rateLimiter, (req, res) => {
       });
     }
     
+    if (script.length > 1000000) {
+      return res.status(400).json({ 
+        success: false, 
+        error: "Script too large. Maximum 1MB" 
+      });
+    }
+    
     // Generar ID ÚNICO
     let scriptId = generateUniqueId();
     while (scriptsDB[scriptId + '.lua']) {
@@ -241,7 +248,7 @@ app.post("/api/scripts", rateLimiter, (req, res) => {
     const fileName = `${scriptId}.lua`;
     const userScriptName = name || 'unnamed';
     
-    // ============ AÑADIR ID ÚNICA Y LUARMOR AL SCRIPT ============
+    // AÑADIR ID ÚNICA Y LUARMOR AL SCRIPT
     const protectedScript = `--[[ PaltidxR Protected ]]--
 --[[ Script ID: ${scriptId} ]]--
 --[[ Luarmor Protection: ACTIVE ]]--
@@ -300,10 +307,8 @@ app.get("/files/v1/loaders/:scriptId",
     if (scriptsDB[scriptId]) {
       const scriptData = scriptsDB[scriptId];
       
-      // Log de acceso con ID
       console.log(`[${new Date().toISOString()}] Script served: ${scriptId} (${scriptData.name})`);
       
-      // Enviar el script con su ID incluida
       res.type("text").send(scriptData.content);
     } else {
       res.status(404).type("text").send("Script not found");
