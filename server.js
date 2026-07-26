@@ -87,7 +87,7 @@ setInterval(() => {
   }
 }, 5 * 60 * 1000);
 
-// 2. Anti-Browser (solo para scripts, sin mencionar Mozilla)
+// 2. Anti-Browser - NUEVA PÁGINA DE BLOQUEO
 function blockBrowsers(req, res, next) {
   if (!req.path.includes('/files/v1/loaders/')) {
     return next();
@@ -125,62 +125,191 @@ function blockBrowsers(req, res, next) {
   
   if (isBrowser && !isExecutor) {
     return res.status(403).type("html").send(`
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <title>Access Denied - PaltidxR</title>
-        <style>
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body {
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Access Denied - PaltidxR</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
             background: #0a0b12;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
-            font-family: 'Segoe UI', sans-serif;
             color: #e0e0e0;
-          }
-          .card {
-            text-align: center;
-            padding: 50px 60px;
-            background: rgba(20, 21, 31, 0.95);
-            border-radius: 24px;
+            padding: 20px;
+        }
+        .glass-card {
+            background: rgba(20, 21, 31, 0.85);
+            backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.06);
-            max-width: 450px;
-          }
-          .icon { font-size: 72px; margin-bottom: 20px; }
-          h1 { font-size: 22px; font-weight: 600; color: #ffffff; margin-bottom: 12px; }
-          p { color: #888; font-size: 14px; line-height: 1.7; }
-          .badge {
+            border-radius: 24px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+        .icon { font-size: 72px; margin-bottom: 16px; }
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+        .subtitle {
+            color: #888;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+        .code-box {
+            background: rgba(9, 10, 18, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 12px;
+            padding: 16px 20px;
+            text-align: left;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 12px;
+            color: #a78bfa;
+            white-space: pre-wrap;
+            word-break: break-all;
+            line-height: 1.6;
+            position: relative;
+        }
+        .btn-copy {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 8px 20px;
+            color: #e0e0e0;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-copy:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(139, 92, 246, 0.3);
+        }
+        .btn-copy.copied {
+            background: rgba(52, 211, 153, 0.15);
+            border-color: rgba(52, 211, 153, 0.3);
+            color: #34d399;
+        }
+        .footer-link {
+            margin-top: 20px;
+            font-size: 12px;
+            color: #4a4a5a;
+        }
+        .footer-link a {
+            color: #a78bfa;
+            text-decoration: none;
+        }
+        .footer-link a:hover {
+            text-decoration: underline;
+        }
+        .badge {
             display: inline-block;
-            margin-top: 16px;
-            padding: 6px 16px;
+            margin-top: 12px;
+            padding: 4px 16px;
             background: rgba(139, 92, 246, 0.1);
-            border: 1px solid rgba(139, 92, 246, 0.2);
+            border: 1px solid rgba(139, 92, 246, 0.15);
             border-radius: 20px;
             font-size: 11px;
             color: #a78bfa;
-          }
-          .detected {
-            margin-top: 14px;
-            padding: 10px;
-            background: rgba(239, 68, 68, 0.05);
-            border-radius: 8px;
-            font-size: 11px;
-            color: #6b7280;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="card">
-          <div class="icon">🔒</div>
-          <h1>Access Denied</h1>
-          <p>This endpoint is for script execution only.<br>Access from browsers is restricted.</p>
-          <div class="badge">PaltidxR Protected</div>
-          <div class="detected">Browser Detected</div>
+        }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(20, 21, 31, 0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(52, 211, 153, 0.3);
+            border-radius: 12px;
+            padding: 12px 24px;
+            color: #e0e0e0;
+            font-size: 14px;
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.5s ease;
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="glass-card">
+        <div class="icon">🔒</div>
+        <h1>You Are Blocked</h1>
+        <p class="subtitle">Your browser has been detected and access is restricted.</p>
+        <div class="badge">Browser Detected</div>
+
+        <div class="code-box" id="codeDisplay">
+            loadstring(game:HttpGet("https://paltidxr-p.onrender.com/files/v1/loaders/script.lua", true))()
         </div>
-      </body>
-      </html>
+
+        <button class="btn-copy" id="copyBtn" onclick="copyCode()">
+            <i class="fa-regular fa-copy"></i>
+            Copy Code
+        </button>
+
+        <div class="footer-link">
+            This code has been protected by API hosting protection.<br>
+            If you want to protect your code too, go to<br>
+            <a href="https://paltidxr-p.onrender.com" target="_blank">https://paltidxr-p.onrender.com</a>
+        </div>
+    </div>
+
+    <div id="toast" class="toast">
+        <i class="fa-regular fa-circle-check mr-2" style="color:#34d399;"></i>
+        <span id="toastMessage">Copied to clipboard!</span>
+    </div>
+
+    <script>
+        const codeToCopy = \`loadstring(game:HttpGet("https://paltidxr-p.onrender.com/files/v1/loaders/script.lua", true))()\`;
+
+        function copyCode() {
+            navigator.clipboard.writeText(codeToCopy).then(() => {
+                const btn = document.getElementById('copyBtn');
+                btn.classList.add('copied');
+                btn.innerHTML = '<i class="fa-regular fa-check"></i> Copied!';
+                showToast('Code copied to clipboard!');
+                setTimeout(() => {
+                    btn.classList.remove('copied');
+                    btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy Code';
+                }, 2500);
+            }).catch(() => {
+                const textarea = document.createElement('textarea');
+                textarea.value = codeToCopy;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast('Code copied to clipboard!');
+            });
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const msg = document.getElementById('toastMessage');
+            msg.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+    </script>
+</body>
+</html>
     `);
   }
   next();
@@ -239,7 +368,6 @@ app.post("/api/scripts", rateLimiter, (req, res) => {
       });
     }
     
-    // Generar ID ÚNICO
     let scriptId = generateUniqueId();
     while (scriptsDB[scriptId + '.lua']) {
       scriptId = generateUniqueId();
@@ -248,20 +376,18 @@ app.post("/api/scripts", rateLimiter, (req, res) => {
     const fileName = `${scriptId}.lua`;
     const userScriptName = name || 'unnamed';
     
-    // AÑADIR ID ÚNICA Y LUARMOR AL SCRIPT
     const protectedScript = `--[[ PaltidxR Protected ]]--
 --[[ Script ID: ${scriptId} ]]--
 --[[ Luarmor Protection: ACTIVE ]]--
 
---[[ ⚠️ NO MODIFICAR ESTE SCRIPT ⚠️ ]]--
---[[ Tu script comienza aquí ]]--
+--[[ ⚠️ DO NOT MODIFY THIS SCRIPT ⚠️ ]]--
+--[[ Your script starts here ]]--
 
 ${script}
 
---[[ Fin del script ]]--
+--[[ End of script ]]--
 --[[ PaltidxR | ID: ${scriptId} ]]--`;
     
-    // Guardar en JSON
     scriptsDB[fileName] = {
       id: fileName,
       name: userScriptName,
@@ -294,7 +420,7 @@ ${script}
   }
 });
 
-// Obtener Script (con verificación de ejecutor)
+// Obtener Script
 app.get("/files/v1/loaders/:scriptId", 
   rateLimiter, 
   blockBrowsers, 
@@ -306,9 +432,7 @@ app.get("/files/v1/loaders/:scriptId",
     
     if (scriptsDB[scriptId]) {
       const scriptData = scriptsDB[scriptId];
-      
       console.log(`[${new Date().toISOString()}] Script served: ${scriptId} (${scriptData.name})`);
-      
       res.type("text").send(scriptData.content);
     } else {
       res.status(404).type("text").send("Script not found");
