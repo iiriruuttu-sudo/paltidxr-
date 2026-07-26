@@ -6,6 +6,12 @@
     <title>PaltidxR - Script Hosting</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -54,6 +60,25 @@
         .btn-secondary:hover {
             background: rgba(255, 255, 255, 0.08);
         }
+        .btn-danger {
+            background: rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            transition: all 0.3s ease;
+            color: #f87171;
+        }
+        .btn-danger:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+        .btn-admin {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            color: white;
+        }
+        .btn-admin:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(245, 158, 11, 0.3);
+        }
         .code-editor {
             font-family: 'JetBrains Mono', 'Fira Code', monospace;
             font-size: 13px;
@@ -80,6 +105,15 @@
             padding: 4px 12px;
             font-size: 11px;
             color: #a78bfa;
+        }
+        .admin-badge {
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 8px;
+            padding: 4px 12px;
+            font-size: 10px;
+            color: #fbbf24;
+            font-weight: 600;
         }
         .feature-icon {
             width: 40px;
@@ -164,8 +198,9 @@
             border: 1px solid rgba(255, 255, 255, 0.06);
             border-radius: 24px;
             padding: 40px;
-            max-width: 400px;
+            max-width: 420px;
             width: 90%;
+            text-align: center;
         }
         .user-avatar {
             width: 48px;
@@ -190,6 +225,51 @@
             background: rgba(255, 255, 255, 0.04);
             border-color: rgba(139, 92, 246, 0.15);
         }
+        .google-btn {
+            background: white;
+            color: #333;
+            transition: all 0.3s ease;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 500;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .google-btn:hover {
+            background: #f0f0f0;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(255, 255, 255, 0.1);
+        }
+        .user-avatar-img {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(139, 92, 246, 0.2);
+        }
+        .admin-panel {
+            border: 1px solid rgba(245, 158, 11, 0.15);
+            background: rgba(245, 158, 11, 0.03);
+        }
+        .banned-user {
+            opacity: 0.5;
+            filter: grayscale(1);
+        }
+        .banned-badge {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            padding: 2px 10px;
+            font-size: 10px;
+            color: #f87171;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -197,30 +277,27 @@
     <!-- ============ LOGIN MODAL ============ -->
     <div id="loginModal" class="modal-overlay">
         <div class="modal-box">
-            <div class="text-center mb-6">
+            <div class="mb-6">
                 <div class="w-16 h-16 rounded-full bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center mx-auto mb-3">
                     <i class="fa-solid fa-shield-halved text-indigo-400 text-2xl"></i>
                 </div>
                 <h2 class="text-white font-bold text-xl">Welcome to PaltidxR</h2>
-                <p class="text-zinc-500 text-xs mt-1">Sign in to manage your scripts</p>
+                <p class="text-zinc-500 text-xs mt-1">Sign in with Google to manage your scripts</p>
             </div>
             
-            <div class="space-y-3">
-                <input type="text" id="loginUsername" placeholder="Username" 
-                       class="glass-input w-full px-4 py-2.5 text-sm" />
-                <input type="password" id="loginPassword" placeholder="Password" 
-                       class="glass-input w-full px-4 py-2.5 text-sm" />
-                
-                <button onclick="handleLogin()" 
-                        class="btn-primary w-full py-2.5 rounded-xl text-white font-medium text-sm">
-                    <i class="fa-solid fa-arrow-right-to-bracket mr-2"></i>
-                    Sign In
-                </button>
-                
-                <p class="text-center text-xs text-zinc-500 mt-2">
-                    Demo: user / password
-                </p>
-            </div>
+            <button id="googleLoginBtn" class="google-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48">
+                    <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
+                    <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z" />
+                    <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z" />
+                    <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z" />
+                </svg>
+                Sign in with Google
+            </button>
+            
+            <p class="text-center text-xs text-zinc-500 mt-4">
+                Secure authentication by Firebase
+            </p>
         </div>
     </div>
 
@@ -247,10 +324,9 @@
                         <i class="fa-solid fa-coins text-[10px] mr-1"></i>
                         Tokens: <span id="tokenCount">10</span>
                     </div>
+                    <span id="adminBadge" class="admin-badge hidden">👑 Admin</span>
                     <div id="userInfo" class="flex items-center gap-2">
-                        <div class="user-avatar w-8 h-8 text-sm">
-                            <i class="fa-regular fa-user"></i>
-                        </div>
+                        <img id="userAvatar" class="user-avatar-img hidden" src="" alt="Avatar" />
                         <span id="userNameDisplay" class="text-xs text-zinc-300 hidden sm:block">Guest</span>
                         <button onclick="handleLogout()" id="logoutBtn" class="btn-secondary text-xs px-3 py-1 rounded-lg text-zinc-400 hidden">
                             <i class="fa-solid fa-right-from-bracket"></i>
@@ -269,6 +345,9 @@
             </button>
             <button onclick="showSection('hosting')" id="tabHosting" class="tab-inactive px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 border whitespace-nowrap">
                 <i class="fa-solid fa-cloud-upload-alt mr-2"></i>Hosting
+            </button>
+            <button onclick="showSection('admin')" id="tabAdmin" class="tab-inactive px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 border whitespace-nowrap">
+                <i class="fa-solid fa-crown mr-2"></i>Admin Panel
             </button>
             <button onclick="showSection('api')" id="tabApi" class="tab-inactive px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 border whitespace-nowrap">
                 <i class="fa-solid fa-code mr-2"></i>API
@@ -331,7 +410,6 @@
             </div>
         </div>
         
-        <!-- Scripts Recientes -->
         <div class="glass-card p-6 mt-6">
             <h3 class="text-sm font-semibold text-white mb-4">Recent Scripts</h3>
             <div id="recentScripts" class="space-y-2">
@@ -402,6 +480,86 @@
                         </button>
                         <span class="text-[10px] text-zinc-500 flex items-center">loadstring(game:HttpGet(url))()</span>
                     </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============ ADMIN PANEL ============ -->
+    <section id="sectionAdmin" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 section-hidden">
+        <div class="glass-card p-6 admin-panel">
+            <h2 class="text-white font-semibold text-lg mb-2 flex items-center gap-2">
+                <i class="fa-solid fa-crown text-yellow-500"></i>
+                Admin Panel
+            </h2>
+            <p class="text-zinc-500 text-xs mb-4">Manage users, tokens, and bans</p>
+            
+            <!-- Admin Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+                <div class="bg-black/30 rounded-xl p-3 text-center">
+                    <p class="text-xs text-zinc-400">Total Users</p>
+                    <p class="text-xl font-bold text-white" id="adminTotalUsers">0</p>
+                </div>
+                <div class="bg-black/30 rounded-xl p-3 text-center">
+                    <p class="text-xs text-zinc-400">Total Scripts</p>
+                    <p class="text-xl font-bold text-white" id="adminTotalScripts">0</p>
+                </div>
+                <div class="bg-black/30 rounded-xl p-3 text-center">
+                    <p class="text-xs text-zinc-400">Banned Users</p>
+                    <p class="text-xl font-bold text-red-400" id="adminBannedUsers">0</p>
+                </div>
+                <div class="bg-black/30 rounded-xl p-3 text-center">
+                    <p class="text-xs text-zinc-400">Tokens Given</p>
+                    <p class="text-xl font-bold text-yellow-400" id="adminTokensGiven">0</p>
+                </div>
+            </div>
+            
+            <!-- Give Tokens -->
+            <div class="bg-black/30 rounded-xl p-4 mb-4">
+                <h3 class="text-sm font-medium text-white mb-3">
+                    <i class="fa-solid fa-coins text-yellow-400 mr-2"></i>
+                    Give Tokens to User
+                </h3>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <input type="email" id="adminTargetEmail" placeholder="user@email.com" 
+                           class="glass-input flex-1 px-3 py-2 text-sm" />
+                    <input type="number" id="adminTokenAmount" placeholder="Amount" value="5" 
+                           class="glass-input w-24 px-3 py-2 text-sm" />
+                    <button onclick="adminGiveTokens()" class="btn-admin px-6 py-2 rounded-xl text-sm font-medium">
+                        <i class="fa-solid fa-gift mr-1"></i>
+                        Give Tokens
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Ban User -->
+            <div class="bg-black/30 rounded-xl p-4 mb-4">
+                <h3 class="text-sm font-medium text-white mb-3">
+                    <i class="fa-solid fa-ban text-red-400 mr-2"></i>
+                    Ban / Unban User
+                </h3>
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <input type="email" id="adminBanEmail" placeholder="user@email.com" 
+                           class="glass-input flex-1 px-3 py-2 text-sm" />
+                    <button onclick="adminBanUser()" class="btn-danger px-6 py-2 rounded-xl text-sm font-medium">
+                        <i class="fa-solid fa-ban mr-1"></i>
+                        Ban User
+                    </button>
+                    <button onclick="adminUnbanUser()" class="btn-secondary px-6 py-2 rounded-xl text-sm font-medium text-emerald-400">
+                        <i class="fa-solid fa-check mr-1"></i>
+                        Unban User
+                    </button>
+                </div>
+            </div>
+            
+            <!-- User List -->
+            <div class="bg-black/30 rounded-xl p-4">
+                <h3 class="text-sm font-medium text-white mb-3">
+                    <i class="fa-solid fa-users mr-2"></i>
+                    User List
+                </h3>
+                <div id="adminUserList" class="space-y-2 max-h-60 overflow-y-auto">
+                    <p class="text-xs text-zinc-500">No users registered yet.</p>
                 </div>
             </div>
         </div>
@@ -509,11 +667,29 @@ https://your-domain.com/files/v1/loaders/abc123xyz.lua
     </div>
 
     <script>
-        // ============ BASEAPP LOGIN SYSTEM ============
-        const APP_DATA_KEY = 'paltidxr_data';
-        const USER_KEY = 'paltidxr_user';
+        // ============ CONFIGURACIÓN DE FIREBASE ============
+        // ⚠️ REEMPLAZA ESTO CON TU CONFIGURACIÓN DE FIREBASE ⚠️
+        const firebaseConfig = {
+            apiKey: "AIzaSyDXk3Z2gQ9n4sSnC4Jw8WQeVj3E2Vd9S1I",
+            authDomain: "paltidxr-7c67e.firebaseapp.com",
+            projectId: "paltidxr-7c67e",
+            storageBucket: "paltidxr-7c67e.firebasestorage.app",
+            messagingSenderId: "1097361510489",
+            appId: "1:1097361510489:web:abc123def456"
+        };
 
-        // Datos por defecto
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const provider = new firebase.auth.GoogleAuthProvider();
+        const db = firebase.firestore();
+
+        // ============ ADMIN CONFIG ============
+        const ADMIN_EMAIL = 'cuenta.para.jugar332@gmail.com';
+
+        // ============ BASE DE DATOS LOCAL ============
+        const APP_DATA_KEY = 'paltidxr_data';
+
         function getDefaultData() {
             return {
                 tokens: 10,
@@ -524,7 +700,6 @@ https://your-domain.com/files/v1/loaders/abc123xyz.lua
             };
         }
 
-        // Cargar datos del usuario
         function loadUserData() {
             try {
                 const data = localStorage.getItem(APP_DATA_KEY);
@@ -537,45 +712,107 @@ https://your-domain.com/files/v1/loaders/abc123xyz.lua
             return defaultData;
         }
 
-        // Guardar datos del usuario
         function saveUserData(data) {
             localStorage.setItem(APP_DATA_KEY, JSON.stringify(data));
         }
 
-        // Obtener usuario actual
-        function getCurrentUser() {
+        // ============ FIREBASE FIRESTORE (Para datos globales) ============
+        async function loadGlobalData() {
             try {
-                return localStorage.getItem(USER_KEY) || 'Guest';
+                const doc = await db.collection('users').doc('global').get();
+                if (doc.exists) {
+                    return doc.data();
+                }
             } catch (e) {
-                return 'Guest';
+                console.log('Error loading global data:', e);
+            }
+            return { users: {}, banned: {}, tokensGiven: 0 };
+        }
+
+        async function saveGlobalData(data) {
+            try {
+                await db.collection('users').doc('global').set(data, { merge: true });
+            } catch (e) {
+                console.log('Error saving global data:', e);
             }
         }
 
-        // ============ LOGIN FUNCTIONS ============
+        // ============ AUTH FUNCTIONS ============
+        let currentUser = null;
+        let isAdmin = false;
+
         function handleLogin() {
-            const username = document.getElementById('loginUsername').value.trim();
-            const password = document.getElementById('loginPassword').value.trim();
-            
-            if (!username || !password) {
-                showToast('Please enter username and password', 'error');
-                return;
-            }
-            
-            localStorage.setItem(USER_KEY, username);
-            document.getElementById('loginModal').classList.add('hidden');
-            document.getElementById('userNameDisplay').textContent = username;
-            document.getElementById('logoutBtn').classList.remove('hidden');
-            showToast('Welcome ' + username + '!', 'success');
-            updateUI();
+            auth.signInWithPopup(provider)
+                .then((result) => {
+                    const user = result.user;
+                    currentUser = user;
+                    isAdmin = user.email === ADMIN_EMAIL;
+                    
+                    document.getElementById('loginModal').classList.add('hidden');
+                    document.getElementById('userNameDisplay').textContent = user.displayName || user.email;
+                    document.getElementById('userAvatar').src = user.photoURL || '';
+                    document.getElementById('userAvatar').classList.remove('hidden');
+                    document.getElementById('logoutBtn').classList.remove('hidden');
+                    
+                    if (isAdmin) {
+                        document.getElementById('adminBadge').classList.remove('hidden');
+                        showToast('👑 Welcome Admin!', 'success');
+                    } else {
+                        showToast('Welcome ' + (user.displayName || user.email) + '!', 'success');
+                    }
+                    
+                    updateUI();
+                    if (isAdmin) loadAdminPanel();
+                })
+                .catch((error) => {
+                    console.error('Login error:', error);
+                    showToast('Error signing in: ' + error.message, 'error');
+                });
         }
 
         function handleLogout() {
-            localStorage.removeItem(USER_KEY);
-            document.getElementById('userNameDisplay').textContent = 'Guest';
-            document.getElementById('logoutBtn').classList.add('hidden');
-            document.getElementById('loginModal').classList.remove('hidden');
-            showToast('Logged out', 'success');
+            auth.signOut().then(() => {
+                currentUser = null;
+                isAdmin = false;
+                document.getElementById('userNameDisplay').textContent = 'Guest';
+                document.getElementById('userAvatar').classList.add('hidden');
+                document.getElementById('logoutBtn').classList.add('hidden');
+                document.getElementById('adminBadge').classList.add('hidden');
+                document.getElementById('loginModal').classList.remove('hidden');
+                showToast('Logged out', 'success');
+                updateUI();
+            }).catch((error) => {
+                showToast('Error logging out: ' + error.message, 'error');
+            });
         }
+
+        // ============ CHECK LOGIN STATUS ============
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                currentUser = user;
+                isAdmin = user.email === ADMIN_EMAIL;
+                
+                document.getElementById('loginModal').classList.add('hidden');
+                document.getElementById('userNameDisplay').textContent = user.displayName || user.email;
+                document.getElementById('userAvatar').src = user.photoURL || '';
+                document.getElementById('userAvatar').classList.remove('hidden');
+                document.getElementById('logoutBtn').classList.remove('hidden');
+                
+                if (isAdmin) {
+                    document.getElementById('adminBadge').classList.remove('hidden');
+                    loadAdminPanel();
+                }
+            } else {
+                currentUser = null;
+                isAdmin = false;
+                document.getElementById('loginModal').classList.remove('hidden');
+                document.getElementById('userNameDisplay').textContent = 'Guest';
+                document.getElementById('userAvatar').classList.add('hidden');
+                document.getElementById('logoutBtn').classList.add('hidden');
+                document.getElementById('adminBadge').classList.add('hidden');
+            }
+            updateUI();
+        });
 
         // ============ TOAST ============
         function showToast(message, type = 'success') {
@@ -599,6 +836,11 @@ https://your-domain.com/files/v1/loaders/abc123xyz.lua
 
         // ============ NAVEGACIÓN ============
         function showSection(section) {
+            if (section === 'admin' && !isAdmin) {
+                showToast('Admin panel only for admins', 'error');
+                return;
+            }
+            
             document.querySelectorAll('[id^="section"]').forEach(el => {
                 el.classList.add('section-hidden');
             });
@@ -611,6 +853,10 @@ https://your-domain.com/files/v1/loaders/abc123xyz.lua
             const tab = document.getElementById('tab' + section.charAt(0).toUpperCase() + section.slice(1));
             tab.classList.remove('tab-inactive');
             tab.classList.add('tab-active');
+            
+            if (section === 'admin' && isAdmin) {
+                loadAdminPanel();
+            }
         }
 
         // ============ TOKENS ============
@@ -620,6 +866,11 @@ https://your-domain.com/files/v1/loaders/abc123xyz.lua
         }
 
         function useToken() {
+            if (isAdmin) {
+                // Admin tokens infinitos
+                return true;
+            }
+            
             const data = loadUserData();
             if (data.tokens <= 0) {
                 showToast('Not enough tokens! Get more tokens.', 'error');
@@ -676,13 +927,12 @@ https://your-domain.com/files/v1/loaders/abc123xyz.lua
         // ============ UPDATE UI ============
         function updateUI() {
             const data = loadUserData();
-            const username = getCurrentUser();
             
-            document.getElementById('tokenCount').textContent = data.tokens || 0;
-            document.getElementById('dashTokens').textContent = data.tokens || 0;
-            document.getElementById('tokensAvailable').textContent = data.tokens || 0;
+            document.getElementById('tokenCount').textContent = isAdmin ? '∞' : (data.tokens || 0);
+            document.getElementById('dashTokens').textContent = isAdmin ? '∞' : (data.tokens || 0);
+            document.getElementById('tokensAvailable').textContent = isAdmin ? '∞' : (data.tokens || 0);
             document.getElementById('tokensUsed').textContent = data.usedTokens || 0;
-            document.getElementById('tokensTotal').textContent = (data.tokens || 0) + (data.usedTokens || 0);
+            document.getElementById('tokensTotal').textContent = isAdmin ? '∞' : ((data.tokens || 0) + (data.usedTokens || 0));
             
             const scriptCount = (data.scripts || []).length;
             document.getElementById('scriptCount').textContent = scriptCount;
@@ -724,8 +974,160 @@ https://your-domain.com/files/v1/loaders/abc123xyz.lua
                     </div>
                 `).join('');
             }
+        }
+
+        // ============ ADMIN FUNCTIONS ============
+        async function loadAdminPanel() {
+            if (!isAdmin) return;
             
-            document.getElementById('userNameDisplay').textContent = username;
+            try {
+                const globalData = await loadGlobalData();
+                const users = globalData.users || {};
+                const banned = globalData.banned || {};
+                
+                const userEmails = Object.keys(users);
+                document.getElementById('adminTotalUsers').textContent = userEmails.length;
+                document.getElementById('adminBannedUsers').textContent = Object.keys(banned).length;
+                document.getElementById('adminTokensGiven').textContent = globalData.tokensGiven || 0;
+                
+                let totalScripts = 0;
+                for (const email of userEmails) {
+                    totalScripts += (users[email]?.scripts || []).length;
+                }
+                document.getElementById('adminTotalScripts').textContent = totalScripts;
+                
+                // User List
+                const userListContainer = document.getElementById('adminUserList');
+                if (userEmails.length === 0) {
+                    userListContainer.innerHTML = '<p class="text-xs text-zinc-500">No users registered yet.</p>';
+                } else {
+                    userListContainer.innerHTML = userEmails.map(email => {
+                        const userData = users[email] || {};
+                        const isBanned = !!banned[email];
+                        return `
+                            <div class="script-item flex items-center justify-between ${isBanned ? 'banned-user' : ''}">
+                                <div>
+                                    <p class="text-xs text-white font-medium">${email}</p>
+                                    <p class="text-[10px] text-zinc-500">Tokens: ${userData.tokens || 0} | Scripts: ${(userData.scripts || []).length}</p>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    ${isBanned ? '<span class="banned-badge">🚫 Banned</span>' : ''}
+                                    <span class="text-[10px] text-zinc-600">${userData.joined ? new Date(userData.joined).toLocaleDateString() : 'N/A'}</span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            } catch (e) {
+                console.log('Error loading admin panel:', e);
+            }
+        }
+
+        async function adminGiveTokens() {
+            if (!isAdmin) {
+                showToast('Only admins can give tokens', 'error');
+                return;
+            }
+            
+            const email = document.getElementById('adminTargetEmail').value.trim();
+            const amount = parseInt(document.getElementById('adminTokenAmount').value) || 5;
+            
+            if (!email) {
+                showToast('Please enter an email', 'error');
+                return;
+            }
+            
+            if (email === ADMIN_EMAIL) {
+                showToast('Admin has infinite tokens!', 'error');
+                return;
+            }
+            
+            try {
+                const globalData = await loadGlobalData();
+                const users = globalData.users || {};
+                
+                if (!users[email]) {
+                    users[email] = {
+                        tokens: 0,
+                        scripts: [],
+                        joined: new Date().toISOString()
+                    };
+                }
+                
+                users[email].tokens = (users[email].tokens || 0) + amount;
+                globalData.users = users;
+                globalData.tokensGiven = (globalData.tokensGiven || 0) + amount;
+                
+                await saveGlobalData(globalData);
+                showToast(`✅ Given ${amount} tokens to ${email}`, 'success');
+                loadAdminPanel();
+            } catch (e) {
+                showToast('Error giving tokens: ' + e.message, 'error');
+            }
+        }
+
+        async function adminBanUser() {
+            if (!isAdmin) {
+                showToast('Only admins can ban users', 'error');
+                return;
+            }
+            
+            const email = document.getElementById('adminBanEmail').value.trim();
+            
+            if (!email) {
+                showToast('Please enter an email', 'error');
+                return;
+            }
+            
+            if (email === ADMIN_EMAIL) {
+                showToast('Cannot ban the admin!', 'error');
+                return;
+            }
+            
+            try {
+                const globalData = await loadGlobalData();
+                const banned = globalData.banned || {};
+                banned[email] = {
+                    bannedAt: new Date().toISOString(),
+                    bannedBy: currentUser.email
+                };
+                globalData.banned = banned;
+                await saveGlobalData(globalData);
+                showToast(`🚫 ${email} has been banned`, 'success');
+                loadAdminPanel();
+            } catch (e) {
+                showToast('Error banning user: ' + e.message, 'error');
+            }
+        }
+
+        async function adminUnbanUser() {
+            if (!isAdmin) {
+                showToast('Only admins can unban users', 'error');
+                return;
+            }
+            
+            const email = document.getElementById('adminBanEmail').value.trim();
+            
+            if (!email) {
+                showToast('Please enter an email', 'error');
+                return;
+            }
+            
+            try {
+                const globalData = await loadGlobalData();
+                const banned = globalData.banned || {};
+                if (banned[email]) {
+                    delete banned[email];
+                    globalData.banned = banned;
+                    await saveGlobalData(globalData);
+                    showToast(`✅ ${email} has been unbanned`, 'success');
+                    loadAdminPanel();
+                } else {
+                    showToast(`${email} is not banned`, 'error');
+                }
+            } catch (e) {
+                showToast('Error unbanning user: ' + e.message, 'error');
+            }
         }
 
         // ============ FILE UPLOAD ============
@@ -743,6 +1145,11 @@ https://your-domain.com/files/v1/loaders/abc123xyz.lua
 
         // ============ CREATE URL ============
         document.getElementById('createUrlBtn').addEventListener('click', async function() {
+            if (!currentUser) {
+                showToast('Please login first', 'error');
+                return;
+            }
+            
             const script = document.getElementById('scriptInput').value.trim();
             const urlName = document.getElementById('urlName').value.trim() || 'my-script';
             
@@ -826,34 +1233,17 @@ https://your-domain.com/files/v1/loaders/abc123xyz.lua
             });
         }
 
-        // ============ CHECK LOGIN STATUS ============
-        function checkLoginStatus() {
-            const user = getCurrentUser();
-            if (user !== 'Guest') {
-                document.getElementById('loginModal').classList.add('hidden');
-                document.getElementById('userNameDisplay').textContent = user;
-                document.getElementById('logoutBtn').classList.remove('hidden');
-            } else {
-                document.getElementById('loginModal').classList.remove('hidden');
-            }
-            updateUI();
-        }
-
         // ============ FETCH STATS ============
         async function fetchStats() {
             try {
                 const response = await fetch('/health');
                 const data = await response.json();
-                if (data.scripts !== undefined) {
-                    // Actualizar stats del servidor
-                }
             } catch (error) {
                 console.log('Stats fetch failed');
             }
         }
 
         // ============ INIT ============
-        checkLoginStatus();
         fetchStats();
     </script>
 </body>
