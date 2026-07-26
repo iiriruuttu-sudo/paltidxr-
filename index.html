@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PaltidxR - Secure Script Obfuscation</title>
+    <title>PaltidxR - Script Hosting</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
@@ -105,16 +105,46 @@
             color: #a78bfa;
         }
         
-        ::-webkit-scrollbar {
-            width: 8px;
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.02); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: rgba(139, 92, 246, 0.3); border-radius: 10px; }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(20, 21, 31, 0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 16px 24px;
+            z-index: 1000;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.5s ease;
         }
-        ::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.02);
-            border-radius: 10px;
+        
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
         }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(139, 92, 246, 0.3);
-            border-radius: 10px;
+        
+        .toast.success { border-color: rgba(52, 211, 153, 0.3); }
+        .toast.error { border-color: rgba(239, 68, 68, 0.3); }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-top: 2px solid #a78bfa;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -129,7 +159,7 @@
                     </div>
                     <div>
                         <h1 class="text-white font-bold text-lg tracking-tight">PaltidxR</h1>
-                        <p class="text-zinc-500 text-[10px] -mt-0.5">Secure Obfuscation</p>
+                        <p class="text-zinc-500 text-[10px] -mt-0.5">Script Hosting Platform</p>
                     </div>
                 </div>
                 
@@ -140,9 +170,9 @@
                     </div>
                     <div class="token-badge">
                         <i class="fa-solid fa-key text-[10px] mr-1"></i>
-                        Bonus Tokens: 10
+                        Tokens: 10
                     </div>
-                    <button class="btn-secondary text-xs px-4 py-1.5 rounded-lg text-zinc-300">
+                    <button id="loginBtn" class="btn-secondary text-xs px-4 py-1.5 rounded-lg text-zinc-300">
                         <i class="fa-regular fa-user mr-1.5"></i>
                         Login
                     </button>
@@ -163,15 +193,15 @@
                     </h3>
                     
                     <div class="space-y-3">
-                        <button class="w-full btn-secondary text-sm py-2.5 px-4 rounded-xl text-zinc-300 flex items-center justify-between group">
+                        <button onclick="clearEditor()" class="w-full btn-secondary text-sm py-2.5 px-4 rounded-xl text-zinc-300 flex items-center justify-between group">
                             <span><i class="fa-regular fa-file-code mr-2"></i>New Script</span>
                             <i class="fa-solid fa-arrow-right text-zinc-600 group-hover:text-indigo-400 transition-colors text-xs"></i>
                         </button>
-                        <button class="w-full btn-secondary text-sm py-2.5 px-4 rounded-xl text-zinc-300 flex items-center justify-between group">
-                            <span><i class="fa-regular fa-folder-open mr-2"></i>My Scripts</span>
+                        <button onclick="loadExample()" class="w-full btn-secondary text-sm py-2.5 px-4 rounded-xl text-zinc-300 flex items-center justify-between group">
+                            <span><i class="fa-regular fa-file-lines mr-2"></i>Load Example</span>
                             <i class="fa-solid fa-arrow-right text-zinc-600 group-hover:text-indigo-400 transition-colors text-xs"></i>
                         </button>
-                        <button class="w-full btn-secondary text-sm py-2.5 px-4 rounded-xl text-zinc-300 flex items-center justify-between group">
+                        <button id="historyBtn" class="w-full btn-secondary text-sm py-2.5 px-4 rounded-xl text-zinc-300 flex items-center justify-between group">
                             <span><i class="fa-regular fa-clock mr-2"></i>History</span>
                             <i class="fa-solid fa-arrow-right text-zinc-600 group-hover:text-indigo-400 transition-colors text-xs"></i>
                         </button>
@@ -180,22 +210,22 @@
                     <hr class="border-white/5 my-4" />
                     
                     <h3 class="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-                        <i class="fa-solid fa-shield text-indigo-400"></i>
-                        Protection Stats
+                        <i class="fa-solid fa-server text-indigo-400"></i>
+                        Server Stats
                     </h3>
                     
                     <div class="space-y-2 text-xs">
                         <div class="flex justify-between items-center">
-                            <span class="text-zinc-400">Scripts Protected</span>
-                            <span class="text-white font-medium">1,247</span>
+                            <span class="text-zinc-400">Scripts Hosted</span>
+                            <span class="text-white font-medium" id="scriptCount">1,247</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-zinc-400">API Requests</span>
-                            <span class="text-white font-medium">84.2K</span>
+                            <span class="text-white font-medium" id="apiCount">84.2K</span>
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-zinc-400">Uptime</span>
-                            <span class="text-emerald-400 font-medium">99.98%</span>
+                            <span class="text-emerald-400 font-medium" id="uptime">99.98%</span>
                         </div>
                     </div>
                     
@@ -210,6 +240,23 @@
                             </div>
                         </div>
                     </div>
+                    
+                    <hr class="border-white/5 my-4" />
+                    
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-2 text-xs text-zinc-400">
+                            <i class="fa-solid fa-cloud text-emerald-400 text-[10px]"></i>
+                            <span>Cloud Hosting</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-xs text-zinc-400">
+                            <i class="fa-solid fa-shield-halved text-emerald-400 text-[10px]"></i>
+                            <span>Server Protection</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-xs text-zinc-400">
+                            <i class="fa-solid fa-bolt text-emerald-400 text-[10px]"></i>
+                            <span>Global CDN</span>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -218,8 +265,8 @@
                 <div class="glass-card p-6">
                     <div class="flex items-center justify-between mb-4">
                         <div>
-                            <h2 class="text-white font-semibold text-lg">Script Obfuscator</h2>
-                            <p class="text-zinc-500 text-xs">Protect your code with advanced encryption</p>
+                            <h2 class="text-white font-semibold text-lg">Script Hosting</h2>
+                            <p class="text-zinc-500 text-xs">Upload and host your scripts securely</p>
                         </div>
                         <div class="flex items-center gap-2">
                             <span class="text-xs text-zinc-500">URL Name:</span>
@@ -246,34 +293,14 @@
                         </div>
                         
                         <textarea id="scriptInput" class="glass-input code-editor w-full p-4" 
-                                  placeholder="-- Paste your script here to obfuscate&#10;-- Supports Lua, JavaScript, Python, and more&#10;&#10;local function hello()&#10;    print('Hello World!')&#10;end&#10;&#10;hello()"
+                                  placeholder="-- Paste your script here to host&#10;-- Supports Lua, JavaScript, Python, and more&#10;&#10;local function hello()&#10;    print('Hello World!')&#10;end&#10;&#10;hello()"
                                   spellcheck="false"></textarea>
-                    </div>
-                    
-                    <!-- Opciones -->
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
-                        <label class="flex items-center gap-2 text-xs text-zinc-400 cursor-pointer">
-                            <input type="checkbox" checked class="accent-indigo-500" />
-                            String Encryption
-                        </label>
-                        <label class="flex items-center gap-2 text-xs text-zinc-400 cursor-pointer">
-                            <input type="checkbox" checked class="accent-indigo-500" />
-                            Control Flow
-                        </label>
-                        <label class="flex items-center gap-2 text-xs text-zinc-400 cursor-pointer">
-                            <input type="checkbox" class="accent-indigo-500" />
-                            Dead Code
-                        </label>
-                        <label class="flex items-center gap-2 text-xs text-zinc-400 cursor-pointer">
-                            <input type="checkbox" class="accent-indigo-500" />
-                            Anti-Decompile
-                        </label>
                     </div>
                     
                     <!-- Botón Create URL -->
                     <button id="createUrlBtn" class="btn-primary w-full mt-4 py-3 rounded-xl text-white font-medium text-sm flex items-center justify-center gap-2">
                         <i class="fa-solid fa-link"></i>
-                        Create Protected URL
+                        Create Hosting URL
                     </button>
                     
                     <!-- Resultado -->
@@ -281,7 +308,7 @@
                         <div class="bg-emerald-600/5 border border-emerald-500/20 rounded-xl p-4">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <p class="text-xs text-emerald-400 font-medium">Script Protected Successfully!</p>
+                                    <p class="text-xs text-emerald-400 font-medium">Script Hosted Successfully!</p>
                                     <p class="text-xs text-zinc-400 mt-1">Your URL is ready to use</p>
                                 </div>
                                 <button onclick="copyUrl()" class="btn-secondary text-xs px-3 py-1.5 rounded-lg text-zinc-300">
@@ -292,6 +319,13 @@
                             <div class="mt-2 bg-black/30 rounded-lg p-3">
                                 <code id="generatedUrl" class="text-xs text-zinc-300 break-all font-mono"></code>
                             </div>
+                            <div class="mt-3 flex gap-2">
+                                <button onclick="copyLoaderString()" class="btn-secondary text-xs px-3 py-1.5 rounded-lg text-zinc-300">
+                                    <i class="fa-regular fa-copy mr-1.5"></i>
+                                    Copy Loader
+                                </button>
+                                <span class="text-[10px] text-zinc-500 flex items-center">loadstring(game:HttpGet(url))()</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -301,10 +335,10 @@
         <!-- Features -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
             <div class="glass-card p-4 flex items-center gap-3">
-                <div class="feature-icon"><i class="fa-solid fa-lock"></i></div>
+                <div class="feature-icon"><i class="fa-solid fa-server"></i></div>
                 <div>
-                    <p class="text-xs font-medium text-white">AES-256</p>
-                    <p class="text-[10px] text-zinc-500">Military-grade encryption</p>
+                    <p class="text-xs font-medium text-white">Cloud Hosting</p>
+                    <p class="text-[10px] text-zinc-500">Always online</p>
                 </div>
             </div>
             <div class="glass-card p-4 flex items-center gap-3">
@@ -317,8 +351,8 @@
             <div class="glass-card p-4 flex items-center gap-3">
                 <div class="feature-icon"><i class="fa-solid fa-shield-halved"></i></div>
                 <div>
-                    <p class="text-xs font-medium text-white">Anti-Tamper</p>
-                    <p class="text-[10px] text-zinc-500">Protection against modification</p>
+                    <p class="text-xs font-medium text-white">Protected</p>
+                    <p class="text-[10px] text-zinc-500">Rate limiting & security</p>
                 </div>
             </div>
             <div class="glass-card p-4 flex items-center gap-3">
@@ -331,53 +365,199 @@
         </div>
     </main>
 
+    <!-- Toast -->
+    <div id="toast" class="toast">
+        <div class="flex items-center gap-3">
+            <i id="toastIcon" class="fa-solid fa-check-circle text-emerald-400"></i>
+            <p id="toastMessage" class="text-sm text-white">Success!</p>
+        </div>
+    </div>
+
     <script>
-        // Upload File
+        // Toast
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toastIcon');
+            const msg = document.getElementById('toastMessage');
+            
+            toast.className = 'toast';
+            if (type === 'success') {
+                toast.classList.add('success');
+                icon.className = 'fa-solid fa-check-circle text-emerald-400';
+            } else {
+                toast.classList.add('error');
+                icon.className = 'fa-solid fa-times-circle text-red-400';
+            }
+            msg.textContent = message;
+            
+            setTimeout(() => toast.classList.add('show'), 10);
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        // File Upload
         document.getElementById('fileUpload').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
                 const reader = new FileReader();
                 reader.onload = function(event) {
                     document.getElementById('scriptInput').value = event.target.result;
+                    showToast(`File "${file.name}" loaded!`, 'success');
                 };
                 reader.readAsText(file);
             }
         });
-        
+
+        // Drag and Drop
+        const textarea = document.getElementById('scriptInput');
+        textarea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.style.borderColor = 'rgba(139, 92, 246, 0.4)';
+        });
+        textarea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+        });
+        textarea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    document.getElementById('scriptInput').value = event.target.result;
+                    showToast(`File "${files[0].name}" loaded!`, 'success');
+                };
+                reader.readAsText(files[0]);
+            }
+        });
+
+        function clearEditor() {
+            document.getElementById('scriptInput').value = '';
+            document.getElementById('urlName').value = '';
+            document.getElementById('resultArea').classList.add('hidden');
+            showToast('Editor cleared', 'success');
+        }
+
+        function loadExample() {
+            const example = `-- PaltidxR Example Script
+-- This script is hosted on PaltidxR
+
+local function main()
+    print("Hello from PaltidxR!")
+    
+    local data = {
+        name = "PaltidxR",
+        version = "1.0.0",
+        secure = true
+    }
+    
+    for key, value in pairs(data) do
+        print(key .. ": " .. tostring(value))
+    end
+    
+    return data
+end
+
+local result = main()
+print("Script executed successfully!")`;
+            
+            document.getElementById('scriptInput').value = example;
+            showToast('Example script loaded!', 'success');
+        }
+
         // Create URL
-        document.getElementById('createUrlBtn').addEventListener('click', function() {
+        document.getElementById('createUrlBtn').addEventListener('click', async function() {
             const script = document.getElementById('scriptInput').value.trim();
             const urlName = document.getElementById('urlName').value.trim() || 'my-script';
             
             if (!script) {
-                alert('Please paste or upload a script first.');
+                showToast('Please paste or upload a script first.', 'error');
                 return;
             }
             
-            // Usa el dominio que TÚ pongas en el servidor
-            const domain = window.location.hostname;
-            const generatedUrl = `https://${domain}/files/v1/loaders/${urlName}.lua`;
+            this.innerHTML = '<span class="loading-spinner"></span> Creating URL...';
+            this.disabled = true;
             
-            document.getElementById('generatedUrl').textContent = generatedUrl;
-            document.getElementById('resultArea').classList.remove('hidden');
-            
-            this.innerHTML = '<i class="fa-solid fa-check"></i> URL Created!';
-            setTimeout(() => {
-                this.innerHTML = '<i class="fa-solid fa-link"></i> Create Protected URL';
-            }, 3000);
+            try {
+                const response = await fetch('/api/scripts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        script: script,
+                        name: urlName
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const domain = window.location.hostname;
+                    const url = `https://${domain}/files/v1/loaders/${urlName}.lua`;
+                    document.getElementById('generatedUrl').textContent = url;
+                    document.getElementById('resultArea').classList.remove('hidden');
+                    showToast('URL created successfully!', 'success');
+                } else {
+                    showToast(data.error || 'Error creating URL', 'error');
+                }
+            } catch (error) {
+                showToast('Error: ' + error.message, 'error');
+            } finally {
+                this.innerHTML = '<i class="fa-solid fa-link"></i> Create Hosting URL';
+                this.disabled = false;
+            }
         });
-        
-        // Copy URL
+
         function copyUrl() {
             const url = document.getElementById('generatedUrl').textContent;
             navigator.clipboard.writeText(url).then(() => {
-                const btn = document.querySelector('#resultArea button');
-                btn.innerHTML = '<i class="fa-solid fa-check mr-1.5"></i> Copied!';
-                setTimeout(() => {
-                    btn.innerHTML = '<i class="fa-regular fa-copy mr-1.5"></i> Copy';
-                }, 2000);
+                showToast('URL copied!', 'success');
+            }).catch(() => {
+                const textarea = document.createElement('textarea');
+                textarea.value = url;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast('URL copied!', 'success');
             });
         }
+
+        function copyLoaderString() {
+            const url = document.getElementById('generatedUrl').textContent;
+            const loader = `loadstring(game:HttpGet("${url}", true))()`;
+            navigator.clipboard.writeText(loader).then(() => {
+                showToast('Loader copied!', 'success');
+            }).catch(() => {
+                const textarea = document.createElement('textarea');
+                textarea.value = loader;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast('Loader copied!', 'success');
+            });
+        }
+
+        document.getElementById('loginBtn').addEventListener('click', function() {
+            showToast('Login coming soon!', 'success');
+        });
+
+        document.getElementById('historyBtn').addEventListener('click', function() {
+            showToast('History coming soon!', 'success');
+        });
+
+        async function fetchStats() {
+            try {
+                const response = await fetch('/health');
+                const data = await response.json();
+                if (data.scripts) {
+                    document.getElementById('scriptCount').textContent = data.scripts.toLocaleString();
+                }
+            } catch (error) {
+                console.log('Stats fetch failed');
+            }
+        }
+        fetchStats();
     </script>
 </body>
 </html>
