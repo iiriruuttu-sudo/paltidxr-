@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Disallow: /files/v1/loaders/
+
+Sitemap: https://paltidxr-p.onrender.com/sitemap.xml
