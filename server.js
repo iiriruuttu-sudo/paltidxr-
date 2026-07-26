@@ -12,6 +12,37 @@ const DOMAIN = process.env.DOMAIN || 'paltidxr.onrender.com';
 app.use(express.json({ limit: '10mb' }));
 app.use(express.text({ limit: '10mb' }));
 
+// ============ BASE DE DATOS EN JSON ============
+
+const SCRIPTS_FILE = path.join(__dirname, "scripts.json");
+
+// Cargar scripts desde el archivo JSON
+function loadScripts() {
+  try {
+    if (fs.existsSync(SCRIPTS_FILE)) {
+      const data = fs.readFileSync(SCRIPTS_FILE, "utf-8");
+      return JSON.parse(data);
+    }
+  } catch (error) {
+    console.error("Error loading scripts:", error);
+  }
+  return {};
+}
+
+// Guardar scripts en el archivo JSON
+function saveScripts(scripts) {
+  try {
+    fs.writeFileSync(SCRIPTS_FILE, JSON.stringify(scripts, null, 2), "utf-8");
+    return true;
+  } catch (error) {
+    console.error("Error saving scripts:", error);
+    return false;
+  }
+}
+
+// Inicializar
+let scriptsDB = loadScripts();
+
 // ============ PROTECCIONES ============
 
 // 1. Rate Limiter
@@ -257,7 +288,7 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// Crear Script
+// Crear Script (guarda en JSON)
 app.post("/api/scripts", rateLimiter, luarmorProtection, (req, res) => {
   try {
     const { script, name } = req.body;
@@ -278,17 +309,23 @@ app.post("/api/scripts", rateLimiter, luarmorProtection, (req, res) => {
     
     const scriptName = name || crypto.randomBytes(8).toString('hex');
     const fileName = `${scriptName}.lua`;
-    const filePath = path.join(__dirname, "scripts", fileName);
     
-    const protectedScript = `--[[ PaltidxR Protected ]]--\n--[[ Luarmor Active ]]--\n${script}`;
+    // Guardar en JSON
+    scriptsDB[fileName] = {
+      id: fileName,
+      name: scriptName,
+      content: script,
+      created: new Date().toISOString(),
+      protected: true
+    };
     
-    fs.writeFileSync(filePath, protectedScript, "utf-8");
+    saveScripts(scriptsDB);
     
     res.json({
       success: true,
       url: `https://${DOMAIN}/files/v1/loaders/${fileName}`,
       name: scriptName,
-      id: scriptName,
+      id: fileName,
       created: new Date().toISOString(),
       message: "Script hosted successfully"
     });
@@ -302,7 +339,7 @@ app.post("/api/scripts", rateLimiter, luarmorProtection, (req, res) => {
   }
 });
 
-// Obtener Script
+// Obtener Script (desde JSON)
 app.get("/files/v1/loaders/:scriptId", 
   rateLimiter, 
   blockBrowsers, 
@@ -312,43 +349,42 @@ app.get("/files/v1/loaders/:scriptId",
   validateScriptId, 
   (req, res) => {
     const scriptId = req.params.scriptId;
-    const filePath = path.join(__dirname, "scripts", scriptId);
     
-    try {
-      if (fs.existsSync(filePath)) {
-        const script = fs.readFileSync(filePath, "utf-8");
-        console.log(`[${new Date().toISOString()}] Script served: ${scriptId}`);
-        res.type("text").send(script);
-      } else {
-        res.status(404).type("text").send("Script not found");
-      }
-    } catch (error) {
-      console.error('Script fetch error:', error);
-      res.status(500).type("text").send("Error loading script");
+    // Recargar scripts por si hubo cambios
+    scriptsDB = loadScripts();
+    
+    if (scriptsDB[scriptId]) {
+      const scriptData = scriptsDB[scriptId];
+      const protectedScript = `--[[ PaltidxR Protected ]]--\n--[[ Luarmor Active ]]--\n${scriptData.content}`;
+      console.log(`[${new Date().toISOString()}] Script served: ${scriptId}`);
+      res.type("text").send(protectedScript);
+    } else {
+      res.status(404).type("text").send("Script not found");
     }
   }
 );
 
 // Listar scripts
 app.get("/api/scripts", rateLimiter, (req, res) => {
-  try {
-    const files = fs.readdirSync(path.join(__dirname, "scripts"));
-    res.json({ 
-      scripts: files,
-      count: files.length,
-      protected: true,
-      luarmor: true
-    });
-  } catch (error) {
-    res.status(500).json({ error: "Error listing scripts" });
-  }
+  scriptsDB = loadScripts();
+  const scriptList = Object.keys(scriptsDB).map(key => ({
+    id: scriptsDB[key].id,
+    name: scriptsDB[key].name,
+    created: scriptsDB[key].created
+  }));
+  
+  res.json({ 
+    scripts: scriptList,
+    count: scriptList.length,
+    protected: true,
+    luarmor: true
+  });
 });
 
 // Health Check
 app.get("/health", (req, res) => {
-  const scriptCount = fs.existsSync(path.join(__dirname, "scripts")) 
-    ? fs.readdirSync(path.join(__dirname, "scripts")).length 
-    : 0;
+  scriptsDB = loadScripts();
+  const scriptCount = Object.keys(scriptsDB).length;
   
   res.json({ 
     status: "online", 
@@ -356,6 +392,7 @@ app.get("/health", (req, res) => {
     version: "1.0.0",
     uptime: process.uptime(),
     scripts: scriptCount,
+    storage: "JSON file",
     protections: {
       rateLimiter: true,
       antiBrowser: true,
@@ -369,15 +406,12 @@ app.get("/health", (req, res) => {
 
 // ============ INICIALIZACIÓN ============
 
-if (!fs.existsSync(path.join(__dirname, "scripts"))) {
-  fs.mkdirSync(path.join(__dirname, "scripts"));
-}
-
 app.listen(PORT, () => {
   console.log(`PaltidxR running on port ${PORT}`);
   console.log(`Domain: https://${DOMAIN}`);
   console.log(`API: https://${DOMAIN}/api/scripts`);
   console.log(`Protected URL: https://${DOMAIN}/files/v1/loaders/{scriptId}`);
+  console.log(`Storage: JSON file (scripts.json)`);
   console.log(`Luarmor Protection: ACTIVE`);
   console.log(`Anti-Browser: ACTIVE`);
   console.log(`Fetch Protection: ACTIVE`);
