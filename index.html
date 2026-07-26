@@ -7,21 +7,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
             background: #0a0b12;
             font-family: 'Inter', sans-serif;
             min-height: 100vh;
             color: #e0e0e0;
-        }
-        
-        .gradient-bg {
-            background: linear-gradient(135deg, #0a0b12 0%, #14151f 50%, #0a0b12 100%);
         }
         
         .glass-card {
@@ -54,7 +46,6 @@
         .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 40px rgba(109, 79, 199, 0.3);
-            border-color: rgba(139, 92, 246, 0.4);
         }
         
         .btn-secondary {
@@ -65,7 +56,6 @@
         
         .btn-secondary:hover {
             background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.15);
         }
         
         .code-editor {
@@ -74,28 +64,6 @@
             line-height: 1.8;
             min-height: 300px;
             resize: vertical;
-            tab-size: 4;
-        }
-        
-        .glow-effect {
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .glow-effect::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(139, 92, 246, 0.03) 0%, transparent 70%);
-            animation: rotate 20s linear infinite;
-        }
-        
-        @keyframes rotate {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
         
         .status-dot {
@@ -123,23 +91,6 @@
             padding: 4px 12px;
             font-size: 11px;
             color: #a78bfa;
-            font-weight: 500;
-        }
-        
-        .upload-zone {
-            border: 2px dashed rgba(255, 255, 255, 0.1);
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-        
-        .upload-zone:hover {
-            border-color: rgba(139, 92, 246, 0.3);
-            background: rgba(139, 92, 246, 0.02);
-        }
-        
-        .upload-zone.dragover {
-            border-color: #6d4fc7;
-            background: rgba(109, 79, 199, 0.05);
         }
         
         .feature-icon {
@@ -156,21 +107,14 @@
         
         ::-webkit-scrollbar {
             width: 8px;
-            height: 8px;
         }
-        
         ::-webkit-scrollbar-track {
             background: rgba(255, 255, 255, 0.02);
             border-radius: 10px;
         }
-        
         ::-webkit-scrollbar-thumb {
             background: rgba(139, 92, 246, 0.3);
             border-radius: 10px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(139, 92, 246, 0.5);
         }
     </style>
 </head>
@@ -207,12 +151,12 @@
         </div>
     </header>
 
-    <!-- Main Content -->
+    <!-- Main -->
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Left Panel - Features -->
+            <!-- Panel Izquierdo -->
             <div class="lg:col-span-1 space-y-4">
-                <div class="glass-card p-6 glow-effect relative">
+                <div class="glass-card p-6">
                     <h3 class="text-sm font-semibold text-white mb-4 flex items-center gap-2">
                         <i class="fa-solid fa-bolt text-indigo-400"></i>
                         Quick Actions
@@ -269,9 +213,9 @@
                 </div>
             </div>
             
-            <!-- Center Panel - Script Editor -->
+            <!-- Panel Central - Editor -->
             <div class="lg:col-span-2">
-                <div class="glass-card p-6 glow-effect relative">
+                <div class="glass-card p-6">
                     <div class="flex items-center justify-between mb-4">
                         <div>
                             <h2 class="text-white font-semibold text-lg">Script Obfuscator</h2>
@@ -284,7 +228,7 @@
                         </div>
                     </div>
                     
-                    <!-- Upload & Editor -->
+                    <!-- Editor -->
                     <div class="relative">
                         <div class="flex items-center justify-between mb-2">
                             <div class="flex items-center gap-2">
@@ -302,11 +246,11 @@
                         </div>
                         
                         <textarea id="scriptInput" class="glass-input code-editor w-full p-4" 
-                                  placeholder="-- Paste your script here to obfuscate&#10;-- Supports Lua, JavaScript, Python, and more&#10;&#10;local function hello()&#10;    print(&#39;Hello World!&#39;)&#10;end&#10;&#10;hello()"
+                                  placeholder="-- Paste your script here to obfuscate&#10;-- Supports Lua, JavaScript, Python, and more&#10;&#10;local function hello()&#10;    print('Hello World!')&#10;end&#10;&#10;hello()"
                                   spellcheck="false"></textarea>
                     </div>
                     
-                    <!-- Options -->
+                    <!-- Opciones -->
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4">
                         <label class="flex items-center gap-2 text-xs text-zinc-400 cursor-pointer">
                             <input type="checkbox" checked class="accent-indigo-500" />
@@ -326,13 +270,13 @@
                         </label>
                     </div>
                     
-                    <!-- Create URL Button -->
+                    <!-- Botón Create URL -->
                     <button id="createUrlBtn" class="btn-primary w-full mt-4 py-3 rounded-xl text-white font-medium text-sm flex items-center justify-center gap-2">
                         <i class="fa-solid fa-link"></i>
                         Create Protected URL
                     </button>
                     
-                    <!-- Result Area -->
+                    <!-- Resultado -->
                     <div id="resultArea" class="mt-4 hidden">
                         <div class="bg-emerald-600/5 border border-emerald-500/20 rounded-xl p-4">
                             <div class="flex items-center justify-between">
@@ -354,39 +298,31 @@
             </div>
         </div>
         
-        <!-- Features Section -->
+        <!-- Features -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
             <div class="glass-card p-4 flex items-center gap-3">
-                <div class="feature-icon">
-                    <i class="fa-solid fa-lock"></i>
-                </div>
+                <div class="feature-icon"><i class="fa-solid fa-lock"></i></div>
                 <div>
                     <p class="text-xs font-medium text-white">AES-256</p>
                     <p class="text-[10px] text-zinc-500">Military-grade encryption</p>
                 </div>
             </div>
             <div class="glass-card p-4 flex items-center gap-3">
-                <div class="feature-icon">
-                    <i class="fa-solid fa-bolt"></i>
-                </div>
+                <div class="feature-icon"><i class="fa-solid fa-bolt"></i></div>
                 <div>
                     <p class="text-xs font-medium text-white">Fast CDN</p>
                     <p class="text-[10px] text-zinc-500">Global distribution</p>
                 </div>
             </div>
             <div class="glass-card p-4 flex items-center gap-3">
-                <div class="feature-icon">
-                    <i class="fa-solid fa-shield-halved"></i>
-                </div>
+                <div class="feature-icon"><i class="fa-solid fa-shield-halved"></i></div>
                 <div>
                     <p class="text-xs font-medium text-white">Anti-Tamper</p>
                     <p class="text-[10px] text-zinc-500">Protection against modification</p>
                 </div>
             </div>
             <div class="glass-card p-4 flex items-center gap-3">
-                <div class="feature-icon">
-                    <i class="fa-solid fa-infinity"></i>
-                </div>
+                <div class="feature-icon"><i class="fa-solid fa-infinity"></i></div>
                 <div>
                     <p class="text-xs font-medium text-white">Unlimited</p>
                     <p class="text-[10px] text-zinc-500">No restrictions</p>
@@ -396,7 +332,7 @@
     </main>
 
     <script>
-        // File Upload Handler
+        // Upload File
         document.getElementById('fileUpload').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
@@ -408,32 +344,7 @@
             }
         });
         
-        // Drag and Drop
-        const textarea = document.getElementById('scriptInput');
-        textarea.addEventListener('dragover', function(e) {
-            e.preventDefault();
-            this.classList.add('dragover');
-        });
-        
-        textarea.addEventListener('dragleave', function(e) {
-            e.preventDefault();
-            this.classList.remove('dragover');
-        });
-        
-        textarea.addEventListener('drop', function(e) {
-            e.preventDefault();
-            this.classList.remove('dragover');
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    document.getElementById('scriptInput').value = event.target.result;
-                };
-                reader.readAsText(files[0]);
-            }
-        });
-        
-        // Create URL Handler
+        // Create URL
         document.getElementById('createUrlBtn').addEventListener('click', function() {
             const script = document.getElementById('scriptInput').value.trim();
             const urlName = document.getElementById('urlName').value.trim() || 'my-script';
@@ -443,16 +354,13 @@
                 return;
             }
             
-            // Simulate API call
-            const domain = 'obf.sibahtools.my.id';
-            const scriptId = 'Z1KsSr8XStRoHkLYE6gT'; // This would come from the server
-            
-            const generatedUrl = `https://${domain}/files/v1/loaders/${scriptId}.lua`;
+            // Usa el dominio que TÚ pongas en el servidor
+            const domain = window.location.hostname;
+            const generatedUrl = `https://${domain}/files/v1/loaders/${urlName}.lua`;
             
             document.getElementById('generatedUrl').textContent = generatedUrl;
             document.getElementById('resultArea').classList.remove('hidden');
             
-            // Show success animation
             this.innerHTML = '<i class="fa-solid fa-check"></i> URL Created!';
             setTimeout(() => {
                 this.innerHTML = '<i class="fa-solid fa-link"></i> Create Protected URL';
