@@ -119,7 +119,7 @@ function blockBrowsers(req, res, next) {
     uaLower.includes("hydrogen") ||
     uaLower.includes("swift") ||
     uaLower.includes("sirius") ||
-    uaLower.includes("luarmor") ||
+    uaLower.includes("paltidxr") ||
     uaLower.includes("electron") ||
     uaLower.includes("wearedevs");
   
@@ -349,7 +349,7 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// Crear Script (con ID único y Luarmor)
+// Crear Script (con ID único y PaltidxR)
 app.post("/api/scripts", rateLimiter, (req, res) => {
   try {
     const { script, name } = req.body;
@@ -378,7 +378,7 @@ app.post("/api/scripts", rateLimiter, (req, res) => {
     
     const protectedScript = `--[[ PaltidxR Protected ]]--
 --[[ Script ID: ${scriptId} ]]--
---[[ Luarmor Protection: ACTIVE ]]--
+--[[ Protection: PaltidxR ACTIVE ]]--
 
 --[[ ⚠️ DO NOT MODIFY THIS SCRIPT ⚠️ ]]--
 --[[ Your script starts here ]]--
@@ -394,7 +394,7 @@ ${script}
       scriptId: scriptId,
       content: protectedScript,
       created: new Date().toISOString(),
-      luarmor: true
+      paltidxr: true
     };
     
     saveScripts(scriptsDB);
@@ -407,8 +407,8 @@ ${script}
       scriptId: scriptId,
       name: userScriptName,
       created: new Date().toISOString(),
-      luarmor: true,
-      message: "Script hosted successfully with Luarmor protection"
+      paltidxr: true,
+      message: "Script hosted successfully with PaltidxR protection"
     });
     
   } catch (error) {
@@ -448,13 +448,13 @@ app.get("/api/scripts", rateLimiter, (req, res) => {
     scriptId: scriptsDB[key].scriptId,
     name: scriptsDB[key].name,
     created: scriptsDB[key].created,
-    luarmor: scriptsDB[key].luarmor || false
+    paltidxr: scriptsDB[key].paltidxr || false
   }));
   
   res.json({ 
     scripts: scriptList,
     count: scriptList.length,
-    luarmor: true
+    paltidxr: true
   });
 });
 
@@ -468,7 +468,7 @@ app.get("/health", (req, res) => {
     service: "PaltidxR API",
     version: "2.0.0",
     scripts: scriptCount,
-    luarmor: true,
+    paltidxr: true,
     uniqueIds: true,
     timestamp: new Date().toISOString()
   });
@@ -482,5 +482,5 @@ app.listen(PORT, () => {
   console.log(`API: https://${DOMAIN}/api/scripts`);
   console.log(`URL: https://${DOMAIN}/files/v1/loaders/{id}.lua`);
   console.log(`Unique IDs: ENABLED ✅`);
-  console.log(`Luarmor Protection: ACTIVE ✅`);
+  console.log(`PaltidxR Protection: ACTIVE ✅`);
 });
