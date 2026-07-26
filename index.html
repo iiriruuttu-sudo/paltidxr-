@@ -32,16 +32,28 @@
             border-radius: 12px;
             transition: all 0.3s ease;
             color: #e0e0e0;
+            width: 100%;
+            padding: 10px 14px;
+            font-size: 14px;
         }
         .glass-input:focus {
             border-color: rgba(139, 92, 246, 0.4);
             box-shadow: 0 0 30px rgba(139, 92, 246, 0.05);
             outline: none;
         }
+        .glass-input::placeholder {
+            color: #4a4a5a;
+        }
         .btn-primary {
             background: linear-gradient(135deg, #6d4fc7, #4a3f7a);
             transition: all 0.3s ease;
             border: 1px solid rgba(139, 92, 246, 0.2);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            width: 100%;
         }
         .btn-primary:hover {
             transform: translateY(-2px);
@@ -56,6 +68,11 @@
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid rgba(255, 255, 255, 0.08);
             transition: all 0.3s ease;
+            color: #e0e0e0;
+            padding: 10px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            width: 100%;
         }
         .btn-secondary:hover {
             background: rgba(255, 255, 255, 0.08);
@@ -65,6 +82,10 @@
             border: 1px solid rgba(239, 68, 68, 0.2);
             transition: all 0.3s ease;
             color: #f87171;
+            padding: 10px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            width: 100%;
         }
         .btn-danger:hover {
             background: rgba(239, 68, 68, 0.3);
@@ -74,6 +95,10 @@
             transition: all 0.3s ease;
             border: 1px solid rgba(245, 158, 11, 0.3);
             color: white;
+            padding: 10px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            width: 100%;
         }
         .btn-admin:hover {
             transform: translateY(-2px);
@@ -178,19 +203,20 @@
         }
         .section-hidden { display: none; }
         
-        /* Login Modal */
         .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(10px);
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(12px);
             z-index: 999;
             display: flex;
             align-items: center;
             justify-content: center;
+            overflow-y: auto;
+            padding: 20px;
         }
         .modal-overlay.hidden { display: none; }
         .modal-box {
@@ -199,8 +225,10 @@
             border-radius: 24px;
             padding: 40px;
             max-width: 420px;
-            width: 90%;
+            width: 100%;
             text-align: center;
+            max-height: 95vh;
+            overflow-y: auto;
         }
         .user-avatar {
             width: 48px;
@@ -270,6 +298,34 @@
             color: #f87171;
             font-weight: 600;
         }
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 16px 0;
+            color: #4a4a5a;
+            font-size: 12px;
+        }
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .divider::before { margin-right: 12px; }
+        .divider::after { margin-left: 12px; }
+        .auth-link {
+            color: #a78bfa;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .auth-link:hover {
+            text-decoration: underline;
+        }
+        .error-text {
+            color: #f87171;
+            font-size: 12px;
+            margin-top: 4px;
+            text-align: left;
+        }
     </style>
 </head>
 <body>
@@ -281,10 +337,11 @@
                 <div class="w-16 h-16 rounded-full bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center mx-auto mb-3">
                     <i class="fa-solid fa-shield-halved text-indigo-400 text-2xl"></i>
                 </div>
-                <h2 class="text-white font-bold text-xl">Welcome to PaltidxR</h2>
-                <p class="text-zinc-500 text-xs mt-1">Sign in with Google to manage your scripts</p>
+                <h2 class="text-white font-bold text-xl" id="authTitle">Welcome to PaltidxR</h2>
+                <p class="text-zinc-500 text-xs mt-1" id="authSubtitle">Sign in to manage your scripts</p>
             </div>
             
+            <!-- Google Login -->
             <button id="googleLoginBtn" class="google-btn">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 48 48">
                     <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z" />
@@ -292,10 +349,50 @@
                     <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z" />
                     <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z" />
                 </svg>
-                Sign in with Google
+                Continue with Google
             </button>
             
-            <p class="text-center text-xs text-zinc-500 mt-4">
+            <div class="divider">or</div>
+            
+            <!-- Login Form -->
+            <div id="loginForm">
+                <div class="space-y-3">
+                    <input type="email" id="loginEmail" placeholder="Email address" class="glass-input" />
+                    <input type="password" id="loginPassword" placeholder="Password" class="glass-input" />
+                    
+                    <button onclick="handleEmailLogin()" class="btn-primary">
+                        <i class="fa-solid fa-arrow-right-to-bracket mr-2"></i>
+                        Sign In
+                    </button>
+                    
+                    <p class="text-xs text-zinc-500 mt-2">
+                        Don't have an account? 
+                        <span class="auth-link" onclick="showRegister()">Sign Up</span>
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Register Form -->
+            <div id="registerForm" class="hidden">
+                <div class="space-y-3">
+                    <input type="email" id="registerEmail" placeholder="Email address" class="glass-input" />
+                    <input type="password" id="registerPassword" placeholder="Password (min 6 characters)" class="glass-input" />
+                    <input type="password" id="registerConfirmPassword" placeholder="Confirm Password" class="glass-input" />
+                    <div id="registerError" class="error-text hidden"></div>
+                    
+                    <button onclick="handleRegister()" class="btn-primary">
+                        <i class="fa-solid fa-user-plus mr-2"></i>
+                        Create Account
+                    </button>
+                    
+                    <p class="text-xs text-zinc-500 mt-2">
+                        Already have an account? 
+                        <span class="auth-link" onclick="showLogin()">Sign In</span>
+                    </p>
+                </div>
+            </div>
+            
+            <p class="text-center text-[10px] text-zinc-600 mt-4">
                 Secure authentication by Firebase
             </p>
         </div>
@@ -328,7 +425,7 @@
                     <div id="userInfo" class="flex items-center gap-2">
                         <img id="userAvatar" class="user-avatar-img hidden" src="" alt="Avatar" />
                         <span id="userNameDisplay" class="text-xs text-zinc-300 hidden sm:block">Guest</span>
-                        <button onclick="handleLogout()" id="logoutBtn" class="btn-secondary text-xs px-3 py-1 rounded-lg text-zinc-400 hidden">
+                        <button onclick="handleLogout()" id="logoutBtn" class="btn-secondary text-xs px-3 py-1 rounded-lg text-zinc-400 hidden" style="width:auto;">
                             <i class="fa-solid fa-right-from-bracket"></i>
                         </button>
                     </div>
@@ -440,7 +537,7 @@
                         <span class="text-[10px] text-zinc-600">Lua</span>
                     </div>
                     <div class="flex items-center gap-2">
-                        <label for="fileUpload" class="btn-secondary text-xs px-3 py-1.5 rounded-lg text-zinc-300 cursor-pointer hover:text-white">
+                        <label for="fileUpload" class="btn-secondary text-xs px-3 py-1.5 rounded-lg text-zinc-300 cursor-pointer hover:text-white" style="width:auto;">
                             <i class="fa-solid fa-upload mr-1.5"></i>
                             Upload
                         </label>
@@ -465,7 +562,7 @@
                             <p class="text-xs text-emerald-400 font-medium">Script Hosted Successfully!</p>
                             <p class="text-xs text-zinc-400 mt-1">Your URL is ready</p>
                         </div>
-                        <button onclick="copyUrl()" class="btn-secondary text-xs px-3 py-1.5 rounded-lg text-zinc-300">
+                        <button onclick="copyUrl()" class="btn-secondary text-xs px-3 py-1.5 rounded-lg text-zinc-300" style="width:auto;">
                             <i class="fa-regular fa-copy mr-1.5"></i>
                             Copy
                         </button>
@@ -474,7 +571,7 @@
                         <code id="generatedUrl" class="text-xs text-zinc-300 break-all font-mono"></code>
                     </div>
                     <div class="mt-3 flex gap-2">
-                        <button onclick="copyLoaderString()" class="btn-secondary text-xs px-3 py-1.5 rounded-lg text-zinc-300">
+                        <button onclick="copyLoaderString()" class="btn-secondary text-xs px-3 py-1.5 rounded-lg text-zinc-300" style="width:auto;">
                             <i class="fa-regular fa-copy mr-1.5"></i>
                             Copy Loader
                         </button>
@@ -668,26 +765,25 @@ https://your-domain.com/files/v1/loaders/abc123xyz.lua
 
     <script>
         // ============ CONFIGURACIÓN DE FIREBASE ============
-        // ⚠️ REEMPLAZA ESTO CON TU CONFIGURACIÓN DE FIREBASE ⚠️
         const firebaseConfig = {
-            apiKey: "AIzaSyDXk3Z2gQ9n4sSnC4Jw8WQeVj3E2Vd9S1I",
-            authDomain: "paltidxr-7c67e.firebaseapp.com",
-            projectId: "paltidxr-7c67e",
-            storageBucket: "paltidxr-7c67e.firebasestorage.app",
-            messagingSenderId: "1097361510489",
-            appId: "1:1097361510489:web:abc123def456"
+            apiKey: "AIzaSyA43atp7QfiATx02OmwmiHIP_FLq7pujoI",
+            authDomain: "paltidxr.firebaseapp.com",
+            projectId: "paltidxr",
+            storageBucket: "paltidxr.firebasestorage.app",
+            messagingSenderId: "165524658376",
+            appId: "1:165524658376:web:d4f7b24d1667459cf7adfd",
+            measurementId: "G-2C7KMFPPWP"
         };
 
-        // Inicializar Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const provider = new firebase.auth.GoogleAuthProvider();
         const db = firebase.firestore();
 
-        // ============ ADMIN CONFIG ============
+        // ============ ADMIN ============
         const ADMIN_EMAIL = 'cuenta.para.jugar332@gmail.com';
 
-        // ============ BASE DE DATOS LOCAL ============
+        // ============ LOCAL DATA ============
         const APP_DATA_KEY = 'paltidxr_data';
 
         function getDefaultData() {
@@ -716,7 +812,7 @@ https://your-domain.com/files/v1/loaders/abc123xyz.lua
             localStorage.setItem(APP_DATA_KEY, JSON.stringify(data));
         }
 
-        // ============ FIREBASE FIRESTORE (Para datos globales) ============
+        // ============ GLOBAL DATA (Firestore) ============
         async function loadGlobalData() {
             try {
                 const doc = await db.collection('users').doc('global').get();
@@ -737,7 +833,7 @@ https://your-domain.com/files/v1/loaders/abc123xyz.lua
             }
         }
 
-        // ============ AUTH FUNCTIONS ============
+        // ============ AUTH ============
         let currentUser = null;
         let isAdmin = false;
 
@@ -765,8 +861,90 @@ https://your-domain.com/files/v1/loaders/abc123xyz.lua
                     if (isAdmin) loadAdminPanel();
                 })
                 .catch((error) => {
-                    console.error('Login error:', error);
                     showToast('Error signing in: ' + error.message, 'error');
+                });
+        }
+
+        function handleEmailLogin() {
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+            
+            if (!email || !password) {
+                showToast('Please enter email and password', 'error');
+                return;
+            }
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .then((result) => {
+                    const user = result.user;
+                    currentUser = user;
+                    isAdmin = user.email === ADMIN_EMAIL;
+                    
+                    document.getElementById('loginModal').classList.add('hidden');
+                    document.getElementById('userNameDisplay').textContent = user.displayName || user.email;
+                    document.getElementById('loginEmail').value = '';
+                    document.getElementById('loginPassword').value = '';
+                    
+                    if (isAdmin) {
+                        document.getElementById('adminBadge').classList.remove('hidden');
+                        showToast('👑 Welcome Admin!', 'success');
+                    } else {
+                        showToast('Welcome ' + user.email + '!', 'success');
+                    }
+                    
+                    updateUI();
+                    if (isAdmin) loadAdminPanel();
+                })
+                .catch((error) => {
+                    showToast('Error: ' + error.message, 'error');
+                });
+        }
+
+        function handleRegister() {
+            const email = document.getElementById('registerEmail').value.trim();
+            const password = document.getElementById('registerPassword').value.trim();
+            const confirm = document.getElementById('registerConfirmPassword').value.trim();
+            const errorEl = document.getElementById('registerError');
+            
+            errorEl.classList.add('hidden');
+            
+            if (!email || !password || !confirm) {
+                errorEl.textContent = 'All fields are required';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
+            if (password.length < 6) {
+                errorEl.textContent = 'Password must be at least 6 characters';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
+            if (password !== confirm) {
+                errorEl.textContent = 'Passwords do not match';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+            
+            auth.createUserWithEmailAndPassword(email, password)
+                .then((result) => {
+                    const user = result.user;
+                    currentUser = user;
+                    isAdmin = user.email === ADMIN_EMAIL;
+                    
+                    document.getElementById('loginModal').classList.add('hidden');
+                    document.getElementById('userNameDisplay').textContent = user.email;
+                    document.getElementById('registerEmail').value = '';
+                    document.getElementById('registerPassword').value = '';
+                    document.getElementById('registerConfirmPassword').value = '';
+                    
+                    showToast('Account created successfully!', 'success');
+                    updateUI();
+                    if (isAdmin) loadAdminPanel();
+                })
+                .catch((error) => {
+                    errorEl.textContent = error.message;
+                    errorEl.classList.remove('hidden');
                 });
         }
 
@@ -786,7 +964,22 @@ https://your-domain.com/files/v1/loaders/abc123xyz.lua
             });
         }
 
-        // ============ CHECK LOGIN STATUS ============
+        function showRegister() {
+            document.getElementById('loginForm').classList.add('hidden');
+            document.getElementById('registerForm').classList.remove('hidden');
+            document.getElementById('authTitle').textContent = 'Create Account';
+            document.getElementById('authSubtitle').textContent = 'Sign up to get started';
+        }
+
+        function showLogin() {
+            document.getElementById('registerForm').classList.add('hidden');
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('authTitle').textContent = 'Welcome to PaltidxR';
+            document.getElementById('authSubtitle').textContent = 'Sign in to manage your scripts';
+            document.getElementById('registerError').classList.add('hidden');
+        }
+
+        // ============ AUTH STATE ============
         auth.onAuthStateChanged((user) => {
             if (user) {
                 currentUser = user;
@@ -867,13 +1060,12 @@ https://your-domain.com/files/v1/loaders/abc123xyz.lua
 
         function useToken() {
             if (isAdmin) {
-                // Admin tokens infinitos
                 return true;
             }
             
             const data = loadUserData();
             if (data.tokens <= 0) {
-                showToast('Not enough tokens! Get more tokens.', 'error');
+                showToast('Not enough tokens!', 'error');
                 return false;
             }
             data.tokens--;
@@ -974,6 +1166,8 @@ https://your-domain.com/files/v1/loaders/abc123xyz.lua
                     </div>
                 `).join('');
             }
+            
+            document.getElementById('userNameDisplay').textContent = currentUser ? (currentUser.displayName || currentUser.email) : 'Guest';
         }
 
         // ============ ADMIN FUNCTIONS ============
@@ -996,7 +1190,6 @@ https://your-domain.com/files/v1/loaders/abc123xyz.lua
                 }
                 document.getElementById('adminTotalScripts').textContent = totalScripts;
                 
-                // User List
                 const userListContainer = document.getElementById('adminUserList');
                 if (userEmails.length === 0) {
                     userListContainer.innerHTML = '<p class="text-xs text-zinc-500">No users registered yet.</p>';
@@ -1233,18 +1426,8 @@ https://your-domain.com/files/v1/loaders/abc123xyz.lua
             });
         }
 
-        // ============ FETCH STATS ============
-        async function fetchStats() {
-            try {
-                const response = await fetch('/health');
-                const data = await response.json();
-            } catch (error) {
-                console.log('Stats fetch failed');
-            }
-        }
-
         // ============ INIT ============
-        fetchStats();
+        updateUI();
     </script>
 </body>
 </html>
