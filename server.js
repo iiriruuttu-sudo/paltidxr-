@@ -98,7 +98,7 @@ function blockBrowsers(req, res, next) {
     uaLower.includes("trident") ||
     uaLower.includes("webkit");
 
-  // Detectar ejecutores (Roblox, Synapse, Krnl, etc.)
+  // Detectar ejecutores
   const isExecutor = 
     uaLower.includes("roblox") ||
     uaLower.includes("synapse") ||
@@ -118,11 +118,12 @@ function blockBrowsers(req, res, next) {
     uaLower.includes("wearedevs") ||
     uaLower.includes("luarmor");
 
-  // Si no tiene User-Agent o está vacío, asumir que es un ejecutor
   const isUnknown = !ua || ua.length < 5;
 
-  // Si es navegador Y NO es ejecutor Y NO es desconocido → BLOQUEAR
   if (isBrowser && !isExecutor && !isUnknown) {
+    // 🔥 LA URL CORRECTA ESTÁ EN UNA SOLA LÍNEA
+    const loaderCode = `loadstring(game:HttpGet("https://${DOMAIN}/files/v1/loaders/script.lua", true))()`;
+    
     return res.status(403).type("html").send(`
 <!DOCTYPE html>
 <html>
@@ -130,8 +131,6 @@ function blockBrowsers(req, res, next) {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Access Denied - PaltidxR</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -157,18 +156,30 @@ function blockBrowsers(req, res, next) {
         .icon { font-size: 72px; margin-bottom: 16px; }
         h1 { font-size: 24px; font-weight: 700; color: #ffffff; margin-bottom: 8px; }
         .subtitle { color: #888; font-size: 14px; margin-bottom: 24px; }
+        .badge {
+            display: inline-block;
+            margin-top: 12px;
+            padding: 4px 16px;
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.15);
+            border-radius: 20px;
+            font-size: 11px;
+            color: #a78bfa;
+        }
         .code-box {
             background: rgba(9, 10, 18, 0.9);
             border: 1px solid rgba(255, 255, 255, 0.06);
             border-radius: 12px;
             padding: 16px 20px;
-            text-align: left;
-            font-family: 'JetBrains Mono', 'Fira Code', monospace;
-            font-size: 12px;
+            margin-top: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
             color: #a78bfa;
-            white-space: pre-wrap;
             word-break: break-all;
-            line-height: 1.6;
+            text-align: left;
+            white-space: pre-wrap;
+            line-height: 1.8;
+            overflow-wrap: break-word;
         }
         .btn-copy {
             background: rgba(255, 255, 255, 0.06);
@@ -203,16 +214,6 @@ function blockBrowsers(req, res, next) {
             text-decoration: none;
         }
         .footer-link a:hover { text-decoration: underline; }
-        .badge {
-            display: inline-block;
-            margin-top: 12px;
-            padding: 4px 16px;
-            background: rgba(139, 92, 246, 0.1);
-            border: 1px solid rgba(139, 92, 246, 0.15);
-            border-radius: 20px;
-            font-size: 11px;
-            color: #a78bfa;
-        }
         .toast {
             position: fixed;
             bottom: 20px;
@@ -242,9 +243,7 @@ function blockBrowsers(req, res, next) {
         <p class="subtitle">Your browser has been detected and access is restricted.</p>
         <div class="badge">Browser Detected</div>
 
-        <div class="code-box" id="codeDisplay">
-            loadstring(game:HttpGet("https://${DOMAIN}/files/v1/loaders/script.lua", true))()
-        </div>
+        <div class="code-box" id="codeDisplay">${loaderCode}</div>
 
         <button class="btn-copy" id="copyBtn" onclick="copyCode()">
             <i class="fa-regular fa-copy"></i>
@@ -264,7 +263,7 @@ function blockBrowsers(req, res, next) {
     </div>
 
     <script>
-        const codeToCopy = \`loadstring(game:HttpGet("https://${DOMAIN}/files/v1/loaders/script.lua", true))()\`;
+        const codeToCopy = "${loaderCode}";
 
         function copyCode() {
             navigator.clipboard.writeText(codeToCopy).then(() => {
