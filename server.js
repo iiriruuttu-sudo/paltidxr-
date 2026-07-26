@@ -9,8 +9,8 @@ const DOMAIN = process.env.DOMAIN || 'paltidxr-p.onrender.com';
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.text({ limit: '10mb' }));
+app.use(express.static(__dirname));
 
-// ============ BASE DE DATOS EN JSON ============
 const SCRIPTS_FILE = path.join(__dirname, "scripts.json");
 
 function loadScripts() {
@@ -37,7 +37,6 @@ function saveScripts(scripts) {
 
 let scriptsDB = loadScripts();
 
-// ============ GENERADOR DE ID ÚNICO ============
 function generateUniqueId() {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
@@ -47,7 +46,6 @@ function generateUniqueId() {
   return result;
 }
 
-// ============ RATE LIMITER ============
 const hits = new Map();
 const WINDOW = 15 * 60 * 1000;
 const MAX = 100;
@@ -79,7 +77,6 @@ setInterval(() => {
   }
 }, 5 * 60 * 1000);
 
-// ============ ANTI-BROWSER CORREGIDO ============
 function blockBrowsers(req, res, next) {
   if (!req.path.includes('/files/v1/loaders/')) {
     return next();
@@ -88,7 +85,6 @@ function blockBrowsers(req, res, next) {
   const ua = req.headers["user-agent"] || "";
   const uaLower = ua.toLowerCase();
 
-  // Detectar navegadores
   const isBrowser = 
     uaLower.includes("chrome") ||
     uaLower.includes("firefox") ||
@@ -98,7 +94,6 @@ function blockBrowsers(req, res, next) {
     uaLower.includes("trident") ||
     uaLower.includes("webkit");
 
-  // Detectar ejecutores
   const isExecutor = 
     uaLower.includes("roblox") ||
     uaLower.includes("synapse") ||
@@ -121,7 +116,6 @@ function blockBrowsers(req, res, next) {
   const isUnknown = !ua || ua.length < 5;
 
   if (isBrowser && !isExecutor && !isUnknown) {
-    // 🔥 LA URL CORRECTA ESTÁ EN UNA SOLA LÍNEA
     const loaderCode = `loadstring(game:HttpGet("https://${DOMAIN}/files/v1/loaders/script.lua", true))()`;
     
     return res.status(403).type("html").send(`
@@ -302,7 +296,6 @@ function blockBrowsers(req, res, next) {
   next();
 }
 
-// ============ HEADERS DE SEGURIDAD ============
 app.use((req, res, next) => {
   res.header('X-Content-Type-Options', 'nosniff');
   res.header('X-Frame-Options', 'DENY');
@@ -314,13 +307,11 @@ app.use((req, res, next) => {
   next();
 });
 
-// ============ LOGGER ============
 app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url} - UA: ${req.headers['user-agent'] || 'Unknown'}`);
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
   next();
 });
 
-// ============ VALIDACIÓN DE SCRIPT ID ============
 function validateScriptId(req, res, next) {
   const scriptId = req.params.scriptId;
   if (!scriptId || scriptId.length < 3) {
@@ -332,14 +323,40 @@ function validateScriptId(req, res, next) {
   next();
 }
 
-// ============ RUTAS ============
+app.get("/sitemap.xml", (req, res) => {
+  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://${DOMAIN}/</loc>
+    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://${DOMAIN}/health</loc>
+    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+</urlset>`;
+  res.header('Content-Type', 'application/xml');
+  res.send(sitemap);
+});
 
-// Servir index.html
+app.get("/robots.txt", (req, res) => {
+  const robots = `User-agent: *
+Allow: /
+Disallow: /files/v1/loaders/
+
+Sitemap: https://${DOMAIN}/sitemap.xml`;
+  res.header('Content-Type', 'text/plain');
+  res.send(robots);
+});
+
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// Crear Script
 app.post("/api/scripts", rateLimiter, (req, res) => {
   try {
     const { script, name } = req.body;
@@ -401,7 +418,6 @@ ${script}
   }
 });
 
-// ============ OBTENER SCRIPT ============
 app.get("/files/v1/loaders/:scriptId", 
   rateLimiter, 
   blockBrowsers, 
@@ -413,16 +429,15 @@ app.get("/files/v1/loaders/:scriptId",
     
     if (scriptsDB[scriptId]) {
       const scriptData = scriptsDB[scriptId];
-      console.log(`[${new Date().toISOString()}] ✅ Script served: ${scriptId} (${scriptData.name})`);
+      console.log(`[${new Date().toISOString()}] Script served: ${scriptId} (${scriptData.name})`);
       res.type("text").send(scriptData.content);
     } else {
-      console.log(`[${new Date().toISOString()}] ❌ Script not found: ${scriptId}`);
+      console.log(`[${new Date().toISOString()}] Script not found: ${scriptId}`);
       res.status(404).type("text").send("Script not found");
     }
   }
 );
 
-// Listar scripts
 app.get("/api/scripts", rateLimiter, (req, res) => {
   scriptsDB = loadScripts();
   const scriptList = Object.keys(scriptsDB).map(key => ({
@@ -440,7 +455,6 @@ app.get("/api/scripts", rateLimiter, (req, res) => {
   });
 });
 
-// Health Check
 app.get("/health", (req, res) => {
   scriptsDB = loadScripts();
   const scriptCount = Object.keys(scriptsDB).length;
@@ -456,17 +470,13 @@ app.get("/health", (req, res) => {
   });
 });
 
-// ============ INICIALIZACIÓN ============
 if (!fs.existsSync(path.join(__dirname, "scripts"))) {
   fs.mkdirSync(path.join(__dirname, "scripts"));
 }
 
 app.listen(PORT, () => {
-  console.log(`✅ PaltidxR running on port ${PORT}`);
-  console.log(`✅ Domain: https://${DOMAIN}`);
-  console.log(`✅ API: https://${DOMAIN}/api/scripts`);
-  console.log(`✅ URL: https://${DOMAIN}/files/v1/loaders/{id}.lua`);
-  console.log(`✅ Unique IDs: ENABLED`);
-  console.log(`✅ PaltidxR Protection: ACTIVE`);
-  console.log(`✅ Anti-Browser: ACTIVE (executors allowed)`);
+  console.log(`PaltidxR running on port ${PORT}`);
+  console.log(`Domain: https://${DOMAIN}`);
+  console.log(`API: https://${DOMAIN}/api/scripts`);
+  console.log(`URL: https://${DOMAIN}/files/v1/loaders/{id}.lua`);
 });
