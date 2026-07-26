@@ -62,7 +62,7 @@
             font-family: 'JetBrains Mono', 'Fira Code', monospace;
             font-size: 13px;
             line-height: 1.8;
-            min-height: 300px;
+            min-height: 250px;
             resize: vertical;
         }
         
@@ -146,6 +146,27 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        
+        .tab-active {
+            background: rgba(139, 92, 246, 0.15);
+            border-color: rgba(139, 92, 246, 0.3);
+            color: white;
+        }
+        
+        .tab-inactive {
+            background: transparent;
+            border-color: transparent;
+            color: #6b7280;
+        }
+        
+        .tab-inactive:hover {
+            background: rgba(255, 255, 255, 0.05);
+            color: #e0e0e0;
+        }
+        
+        .section-hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -181,189 +202,275 @@
         </div>
     </header>
 
-    <!-- Main -->
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Panel Izquierdo -->
-            <div class="lg:col-span-1 space-y-4">
-                <div class="glass-card p-6">
-                    <h3 class="text-sm font-semibold text-white mb-4 flex items-center gap-2">
-                        <i class="fa-solid fa-bolt text-indigo-400"></i>
-                        Quick Actions
-                    </h3>
-                    
-                    <div class="space-y-3">
-                        <button onclick="clearEditor()" class="w-full btn-secondary text-sm py-2.5 px-4 rounded-xl text-zinc-300 flex items-center justify-between group">
-                            <span><i class="fa-regular fa-file-code mr-2"></i>New Script</span>
-                            <i class="fa-solid fa-arrow-right text-zinc-600 group-hover:text-indigo-400 transition-colors text-xs"></i>
-                        </button>
-                        <button onclick="loadExample()" class="w-full btn-secondary text-sm py-2.5 px-4 rounded-xl text-zinc-300 flex items-center justify-between group">
-                            <span><i class="fa-regular fa-file-lines mr-2"></i>Load Example</span>
-                            <i class="fa-solid fa-arrow-right text-zinc-600 group-hover:text-indigo-400 transition-colors text-xs"></i>
-                        </button>
-                        <button id="historyBtn" class="w-full btn-secondary text-sm py-2.5 px-4 rounded-xl text-zinc-300 flex items-center justify-between group">
-                            <span><i class="fa-regular fa-clock mr-2"></i>History</span>
-                            <i class="fa-solid fa-arrow-right text-zinc-600 group-hover:text-indigo-400 transition-colors text-xs"></i>
-                        </button>
+    <!-- Tabs de Navegación -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+        <div class="flex gap-2 border-b border-white/5 pb-2">
+            <button onclick="showSection('dashboard')" id="tabDashboard" class="tab-active px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 border">
+                <i class="fa-solid fa-gauge-high mr-2"></i>Dashboard
+            </button>
+            <button onclick="showSection('hosting')" id="tabHosting" class="tab-inactive px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 border">
+                <i class="fa-solid fa-cloud-upload-alt mr-2"></i>Hosting
+            </button>
+            <button onclick="showSection('api')" id="tabApi" class="tab-inactive px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 border">
+                <i class="fa-solid fa-code mr-2"></i>API
+            </button>
+            <button onclick="showSection('tokens')" id="tabTokens" class="tab-inactive px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 border">
+                <i class="fa-solid fa-coins mr-2"></i>Tokens
+            </button>
+            <button onclick="showSection('bot')" id="tabBot" class="tab-inactive px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 border">
+                <i class="fa-solid fa-robot mr-2"></i>Bot
+            </button>
+        </div>
+    </div>
+
+    <!-- ====== SECCIÓN DASHBOARD ====== -->
+    <section id="sectionDashboard" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="glass-card p-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-indigo-600/10 border border-indigo-500/20 flex items-center justify-center">
+                        <i class="fa-solid fa-file-code text-indigo-400"></i>
                     </div>
-                    
-                    <hr class="border-white/5 my-4" />
-                    
-                    <h3 class="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-                        <i class="fa-solid fa-server text-indigo-400"></i>
-                        Server Stats
-                    </h3>
-                    
-                    <div class="space-y-2 text-xs">
-                        <div class="flex justify-between items-center">
-                            <span class="text-zinc-400">Scripts Hosted</span>
-                            <span class="text-white font-medium" id="scriptCount">1,247</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-zinc-400">API Requests</span>
-                            <span class="text-white font-medium" id="apiCount">84.2K</span>
-                        </div>
-                        <div class="flex justify-between items-center">
-                            <span class="text-zinc-400">Uptime</span>
-                            <span class="text-emerald-400 font-medium" id="uptime">99.98%</span>
-                        </div>
-                    </div>
-                    
-                    <hr class="border-white/5 my-4" />
-                    
-                    <div class="bg-indigo-600/5 border border-indigo-500/10 rounded-xl p-4">
-                        <div class="flex items-start gap-3">
-                            <i class="fa-solid fa-gift text-indigo-400 text-sm mt-0.5"></i>
-                            <div>
-                                <p class="text-xs text-zinc-300">Bonus Tokens Available</p>
-                                <p class="text-lg font-bold text-white">10 <span class="text-xs font-normal text-zinc-400">tokens</span></p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <hr class="border-white/5 my-4" />
-                    
-                    <div class="space-y-2">
-                        <div class="flex items-center gap-2 text-xs text-zinc-400">
-                            <i class="fa-solid fa-cloud text-emerald-400 text-[10px]"></i>
-                            <span>Cloud Hosting</span>
-                        </div>
-                        <div class="flex items-center gap-2 text-xs text-zinc-400">
-                            <i class="fa-solid fa-shield-halved text-emerald-400 text-[10px]"></i>
-                            <span>Server Protection</span>
-                        </div>
-                        <div class="flex items-center gap-2 text-xs text-zinc-400">
-                            <i class="fa-solid fa-bolt text-emerald-400 text-[10px]"></i>
-                            <span>Global CDN</span>
-                        </div>
+                    <div>
+                        <p class="text-xs text-zinc-400">Scripts Hosted</p>
+                        <p class="text-2xl font-bold text-white" id="scriptCount">0</p>
                     </div>
                 </div>
             </div>
-            
-            <!-- Panel Central - Editor -->
-            <div class="lg:col-span-2">
-                <div class="glass-card p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <div>
-                            <h2 class="text-white font-semibold text-lg">Script Hosting</h2>
-                            <p class="text-zinc-500 text-xs">Upload and host your scripts securely</p>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs text-zinc-500">URL Name:</span>
-                            <input type="text" id="urlName" placeholder="my-script" 
-                                   class="glass-input text-xs px-3 py-1.5 w-32" />
-                        </div>
+            <div class="glass-card p-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-emerald-600/10 border border-emerald-500/20 flex items-center justify-center">
+                        <i class="fa-solid fa-arrow-trend-up text-emerald-400"></i>
                     </div>
-                    
-                    <!-- Editor -->
-                    <div class="relative">
-                        <div class="flex items-center justify-between mb-2">
-                            <div class="flex items-center gap-2">
-                                <span class="text-xs text-zinc-400">Script Code</span>
-                                <span class="text-[10px] text-zinc-600">Lua, JavaScript, Python</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <label for="fileUpload" class="btn-secondary text-xs px-3 py-1.5 rounded-lg text-zinc-300 cursor-pointer hover:text-white transition-colors">
-                                    <i class="fa-solid fa-upload mr-1.5"></i>
-                                    Upload
-                                </label>
-                                <input type="file" id="fileUpload" accept=".lua,.js,.py,.txt" class="hidden" />
-                                <span class="text-[10px] text-zinc-600">or paste below</span>
-                            </div>
-                        </div>
-                        
-                        <textarea id="scriptInput" class="glass-input code-editor w-full p-4" 
-                                  placeholder="-- Paste your script here to host&#10;-- Supports Lua, JavaScript, Python, and more&#10;&#10;local function hello()&#10;    print('Hello World!')&#10;end&#10;&#10;hello()"
-                                  spellcheck="false"></textarea>
+                    <div>
+                        <p class="text-xs text-zinc-400">API Requests</p>
+                        <p class="text-2xl font-bold text-white" id="apiCount">0</p>
                     </div>
-                    
-                    <!-- Botón Create URL -->
-                    <button id="createUrlBtn" class="btn-primary w-full mt-4 py-3 rounded-xl text-white font-medium text-sm flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-link"></i>
-                        Create Hosting URL
-                    </button>
-                    
-                    <!-- Resultado -->
-                    <div id="resultArea" class="mt-4 hidden">
-                        <div class="bg-emerald-600/5 border border-emerald-500/20 rounded-xl p-4">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-xs text-emerald-400 font-medium">Script Hosted Successfully!</p>
-                                    <p class="text-xs text-zinc-400 mt-1">Your URL is ready to use</p>
-                                </div>
-                                <button onclick="copyUrl()" class="btn-secondary text-xs px-3 py-1.5 rounded-lg text-zinc-300">
-                                    <i class="fa-regular fa-copy mr-1.5"></i>
-                                    Copy
-                                </button>
-                            </div>
-                            <div class="mt-2 bg-black/30 rounded-lg p-3">
-                                <code id="generatedUrl" class="text-xs text-zinc-300 break-all font-mono"></code>
-                            </div>
-                            <div class="mt-3 flex gap-2">
-                                <button onclick="copyLoaderString()" class="btn-secondary text-xs px-3 py-1.5 rounded-lg text-zinc-300">
-                                    <i class="fa-regular fa-copy mr-1.5"></i>
-                                    Copy Loader
-                                </button>
-                                <span class="text-[10px] text-zinc-500 flex items-center">loadstring(game:HttpGet(url))()</span>
-                            </div>
-                        </div>
+                </div>
+            </div>
+            <div class="glass-card p-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-purple-600/10 border border-purple-500/20 flex items-center justify-center">
+                        <i class="fa-solid fa-coins text-purple-400"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-zinc-400">Tokens</p>
+                        <p class="text-2xl font-bold text-white">10</p>
+                    </div>
+                </div>
+            </div>
+            <div class="glass-card p-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-emerald-600/10 border border-emerald-500/20 flex items-center justify-center">
+                        <i class="fa-solid fa-circle-check text-emerald-400"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-zinc-400">Status</p>
+                        <p class="text-2xl font-bold text-emerald-400">Online</p>
                     </div>
                 </div>
             </div>
         </div>
         
-        <!-- Features -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
-            <div class="glass-card p-4 flex items-center gap-3">
-                <div class="feature-icon"><i class="fa-solid fa-server"></i></div>
+        <!-- Scripts Recientes -->
+        <div class="glass-card p-6 mt-6">
+            <h3 class="text-sm font-semibold text-white mb-4">Recent Scripts</h3>
+            <div id="recentScripts" class="space-y-2">
+                <p class="text-xs text-zinc-500">No scripts hosted yet. Create one in the Hosting tab.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ====== SECCIÓN HOSTING ====== -->
+    <section id="sectionHosting" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 section-hidden">
+        <div class="glass-card p-6">
+            <div class="flex items-center justify-between mb-4">
                 <div>
-                    <p class="text-xs font-medium text-white">Cloud Hosting</p>
-                    <p class="text-[10px] text-zinc-500">Always online</p>
+                    <h2 class="text-white font-semibold text-lg">Host Script</h2>
+                    <p class="text-zinc-500 text-xs">Upload and host your scripts</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-xs text-zinc-500">Script Name:</span>
+                    <input type="text" id="urlName" placeholder="my-script" 
+                           class="glass-input text-xs px-3 py-1.5 w-32" />
                 </div>
             </div>
-            <div class="glass-card p-4 flex items-center gap-3">
-                <div class="feature-icon"><i class="fa-solid fa-bolt"></i></div>
-                <div>
-                    <p class="text-xs font-medium text-white">Fast CDN</p>
-                    <p class="text-[10px] text-zinc-500">Global distribution</p>
+            
+            <!-- Editor -->
+            <div class="relative">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-zinc-400">Code</span>
+                        <span class="text-[10px] text-zinc-600">Lua, JavaScript, Python</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <label for="fileUpload" class="btn-secondary text-xs px-3 py-1.5 rounded-lg text-zinc-300 cursor-pointer hover:text-white">
+                            <i class="fa-solid fa-upload mr-1.5"></i>
+                            Upload
+                        </label>
+                        <input type="file" id="fileUpload" accept=".lua,.js,.py,.txt" class="hidden" />
+                        <span class="text-[10px] text-zinc-600">or paste below</span>
+                    </div>
                 </div>
+                
+                <textarea id="scriptInput" class="glass-input code-editor w-full p-4" 
+                          placeholder="-- Paste your script here to host&#10;-- Supports Lua, JavaScript, Python, and more"
+                          spellcheck="false"></textarea>
             </div>
-            <div class="glass-card p-4 flex items-center gap-3">
-                <div class="feature-icon"><i class="fa-solid fa-shield-halved"></i></div>
-                <div>
-                    <p class="text-xs font-medium text-white">Protected</p>
-                    <p class="text-[10px] text-zinc-500">Rate limiting & security</p>
-                </div>
-            </div>
-            <div class="glass-card p-4 flex items-center gap-3">
-                <div class="feature-icon"><i class="fa-solid fa-infinity"></i></div>
-                <div>
-                    <p class="text-xs font-medium text-white">Unlimited</p>
-                    <p class="text-[10px] text-zinc-500">No restrictions</p>
+            
+            <!-- Botón Create URL -->
+            <button id="createUrlBtn" class="btn-primary w-full mt-4 py-3 rounded-xl text-white font-medium text-sm flex items-center justify-center gap-2">
+                <i class="fa-solid fa-link"></i>
+                Create Hosting URL
+            </button>
+            
+            <!-- Resultado -->
+            <div id="resultArea" class="mt-4 hidden">
+                <div class="bg-emerald-600/5 border border-emerald-500/20 rounded-xl p-4">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-xs text-emerald-400 font-medium">Script Hosted Successfully!</p>
+                            <p class="text-xs text-zinc-400 mt-1">Your URL is ready</p>
+                        </div>
+                        <button onclick="copyUrl()" class="btn-secondary text-xs px-3 py-1.5 rounded-lg text-zinc-300">
+                            <i class="fa-regular fa-copy mr-1.5"></i>
+                            Copy
+                        </button>
+                    </div>
+                    <div class="mt-2 bg-black/30 rounded-lg p-3">
+                        <code id="generatedUrl" class="text-xs text-zinc-300 break-all font-mono"></code>
+                    </div>
+                    <div class="mt-3 flex gap-2">
+                        <button onclick="copyLoaderString()" class="btn-secondary text-xs px-3 py-1.5 rounded-lg text-zinc-300">
+                            <i class="fa-regular fa-copy mr-1.5"></i>
+                            Copy Loader
+                        </button>
+                        <span class="text-[10px] text-zinc-500 flex items-center">loadstring(game:HttpGet(url))()</span>
+                    </div>
                 </div>
             </div>
         </div>
-    </main>
+    </section>
+
+    <!-- ====== SECCIÓN API ====== -->
+    <section id="sectionApi" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 section-hidden">
+        <div class="glass-card p-6">
+            <h2 class="text-white font-semibold text-lg mb-2">API Documentation</h2>
+            <p class="text-zinc-500 text-xs mb-4">REST API endpoints for script hosting</p>
+            
+            <div class="space-y-4">
+                <!-- POST /api/scripts -->
+                <div class="bg-black/30 rounded-xl p-4">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded">POST</span>
+                        <code class="text-xs text-zinc-300">/api/scripts</code>
+                    </div>
+                    <p class="text-xs text-zinc-400 mb-2">Create and host a new script</p>
+                    <div class="bg-black/40 rounded-lg p-3">
+                        <code class="text-xs text-zinc-400">
+{<br />
+&nbsp;&nbsp;"script": "your code here",<br />
+&nbsp;&nbsp;"name": "script-name"<br />
+}
+                        </code>
+                    </div>
+                    <div class="mt-2 flex gap-2">
+                        <button onclick="copyApiExample('post')" class="btn-secondary text-xs px-3 py-1 rounded-lg text-zinc-300">
+                            <i class="fa-regular fa-copy mr-1"></i>Copy Example
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- GET /files/v1/loaders/:id -->
+                <div class="bg-black/30 rounded-xl p-4">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-xs font-bold text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded">GET</span>
+                        <code class="text-xs text-zinc-300">/files/v1/loaders/:scriptId</code>
+                    </div>
+                    <p class="text-xs text-zinc-400 mb-2">Retrieve a hosted script</p>
+                    <div class="bg-black/40 rounded-lg p-3">
+                        <code class="text-xs text-zinc-400">
+https://your-domain.com/files/v1/loaders/script-name.lua
+                        </code>
+                    </div>
+                </div>
+                
+                <!-- GET /health -->
+                <div class="bg-black/30 rounded-xl p-4">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="text-xs font-bold text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded">GET</span>
+                        <code class="text-xs text-zinc-300">/health</code>
+                    </div>
+                    <p class="text-xs text-zinc-400 mb-2">Check server status</p>
+                    <div class="bg-black/40 rounded-lg p-3">
+                        <code class="text-xs text-zinc-400">
+{ "status": "online", "service": "PaltidxR API" }
+                        </code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ====== SECCIÓN TOKENS ====== -->
+    <section id="sectionTokens" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 section-hidden">
+        <div class="glass-card p-6">
+            <h2 class="text-white font-semibold text-lg mb-2">Tokens</h2>
+            <p class="text-zinc-500 text-xs mb-4">Manage your tokens</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-black/30 rounded-xl p-4 text-center">
+                    <p class="text-xs text-zinc-400">Available</p>
+                    <p class="text-3xl font-bold text-white">10</p>
+                </div>
+                <div class="bg-black/30 rounded-xl p-4 text-center">
+                    <p class="text-xs text-zinc-400">Used</p>
+                    <p class="text-3xl font-bold text-zinc-400">0</p>
+                </div>
+                <div class="bg-black/30 rounded-xl p-4 text-center">
+                    <p class="text-xs text-zinc-400">Total</p>
+                    <p class="text-3xl font-bold text-white">10</p>
+                </div>
+            </div>
+            
+            <div class="mt-4 p-4 bg-indigo-600/5 border border-indigo-500/10 rounded-xl">
+                <p class="text-xs text-zinc-400">Each script hosted costs 1 token</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ====== SECCIÓN BOT ====== -->
+    <section id="sectionBot" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 section-hidden">
+        <div class="glass-card p-6">
+            <h2 class="text-white font-semibold text-lg mb-2">Bot</h2>
+            <p class="text-zinc-500 text-xs mb-4">Discord bot integration</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-black/30 rounded-xl p-4">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-robot text-indigo-400 text-2xl"></i>
+                        <div>
+                            <p class="text-sm font-medium text-white">PaltidxR Bot</p>
+                            <p class="text-xs text-zinc-400">Coming soon</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-black/30 rounded-xl p-4">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-brands fa-discord text-indigo-400 text-2xl"></i>
+                        <div>
+                            <p class="text-sm font-medium text-white">Discord Integration</p>
+                            <p class="text-xs text-zinc-400">Coming soon</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-4 p-4 bg-zinc-800/30 rounded-xl">
+                <p class="text-xs text-zinc-400">Bot features: Host scripts, manage tokens, view stats</p>
+            </div>
+        </div>
+    </section>
 
     <!-- Toast -->
     <div id="toast" class="toast">
@@ -374,7 +481,28 @@
     </div>
 
     <script>
-        // Toast
+        // ========== NAVEGACIÓN ==========
+        function showSection(section) {
+            // Ocultar todas las secciones
+            document.querySelectorAll('[id^="section"]').forEach(el => {
+                el.classList.add('section-hidden');
+            });
+            
+            // Mostrar sección seleccionada
+            document.getElementById('section' + section.charAt(0).toUpperCase() + section.slice(1)).classList.remove('section-hidden');
+            
+            // Actualizar tabs
+            document.querySelectorAll('[id^="tab"]').forEach(el => {
+                el.classList.remove('tab-active');
+                el.classList.add('tab-inactive');
+            });
+            
+            const tab = document.getElementById('tab' + section.charAt(0).toUpperCase() + section.slice(1));
+            tab.classList.remove('tab-inactive');
+            tab.classList.add('tab-active');
+        }
+
+        // ========== TOAST ==========
         function showToast(message, type = 'success') {
             const toast = document.getElementById('toast');
             const icon = document.getElementById('toastIcon');
@@ -394,7 +522,7 @@
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
 
-        // File Upload
+        // ========== FILE UPLOAD ==========
         document.getElementById('fileUpload').addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
@@ -407,65 +535,7 @@
             }
         });
 
-        // Drag and Drop
-        const textarea = document.getElementById('scriptInput');
-        textarea.addEventListener('dragover', function(e) {
-            e.preventDefault();
-            this.style.borderColor = 'rgba(139, 92, 246, 0.4)';
-        });
-        textarea.addEventListener('dragleave', function(e) {
-            e.preventDefault();
-            this.style.borderColor = 'rgba(255, 255, 255, 0.08)';
-        });
-        textarea.addEventListener('drop', function(e) {
-            e.preventDefault();
-            this.style.borderColor = 'rgba(255, 255, 255, 0.08)';
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    document.getElementById('scriptInput').value = event.target.result;
-                    showToast(`File "${files[0].name}" loaded!`, 'success');
-                };
-                reader.readAsText(files[0]);
-            }
-        });
-
-        function clearEditor() {
-            document.getElementById('scriptInput').value = '';
-            document.getElementById('urlName').value = '';
-            document.getElementById('resultArea').classList.add('hidden');
-            showToast('Editor cleared', 'success');
-        }
-
-        function loadExample() {
-            const example = `-- PaltidxR Example Script
--- This script is hosted on PaltidxR
-
-local function main()
-    print("Hello from PaltidxR!")
-    
-    local data = {
-        name = "PaltidxR",
-        version = "1.0.0",
-        secure = true
-    }
-    
-    for key, value in pairs(data) do
-        print(key .. ": " .. tostring(value))
-    end
-    
-    return data
-end
-
-local result = main()
-print("Script executed successfully!")`;
-            
-            document.getElementById('scriptInput').value = example;
-            showToast('Example script loaded!', 'success');
-        }
-
-        // Create URL
+        // ========== CREATE URL ==========
         document.getElementById('createUrlBtn').addEventListener('click', async function() {
             const script = document.getElementById('scriptInput').value.trim();
             const urlName = document.getElementById('urlName').value.trim() || 'my-script';
@@ -496,6 +566,9 @@ print("Script executed successfully!")`;
                     document.getElementById('generatedUrl').textContent = url;
                     document.getElementById('resultArea').classList.remove('hidden');
                     showToast('URL created successfully!', 'success');
+                    
+                    // Actualizar dashboard
+                    fetchStats();
                 } else {
                     showToast(data.error || 'Error creating URL', 'error');
                 }
@@ -507,17 +580,10 @@ print("Script executed successfully!")`;
             }
         });
 
+        // ========== COPY FUNCTIONS ==========
         function copyUrl() {
             const url = document.getElementById('generatedUrl').textContent;
             navigator.clipboard.writeText(url).then(() => {
-                showToast('URL copied!', 'success');
-            }).catch(() => {
-                const textarea = document.createElement('textarea');
-                textarea.value = url;
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textarea);
                 showToast('URL copied!', 'success');
             });
         }
@@ -527,37 +593,37 @@ print("Script executed successfully!")`;
             const loader = `loadstring(game:HttpGet("${url}", true))()`;
             navigator.clipboard.writeText(loader).then(() => {
                 showToast('Loader copied!', 'success');
-            }).catch(() => {
-                const textarea = document.createElement('textarea');
-                textarea.value = loader;
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textarea);
-                showToast('Loader copied!', 'success');
             });
         }
 
-        document.getElementById('loginBtn').addEventListener('click', function() {
-            showToast('Login coming soon!', 'success');
-        });
+        function copyApiExample(type) {
+            let text = '';
+            if (type === 'post') {
+                text = `fetch('/api/scripts', {\n  method: 'POST',\n  headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify({\n    script: 'your code here',\n    name: 'script-name'\n  })\n})`;
+            }
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Example copied!', 'success');
+            });
+        }
 
-        document.getElementById('historyBtn').addEventListener('click', function() {
-            showToast('History coming soon!', 'success');
-        });
-
+        // ========== FETCH STATS ==========
         async function fetchStats() {
             try {
                 const response = await fetch('/health');
                 const data = await response.json();
-                if (data.scripts) {
-                    document.getElementById('scriptCount').textContent = data.scripts.toLocaleString();
+                if (data.scripts !== undefined) {
+                    document.getElementById('scriptCount').textContent = data.scripts;
                 }
             } catch (error) {
                 console.log('Stats fetch failed');
             }
         }
         fetchStats();
+
+        // ========== LOGIN ==========
+        document.getElementById('loginBtn').addEventListener('click', function() {
+            showToast('Login coming soon!', 'success');
+        });
     </script>
 </body>
 </html>
