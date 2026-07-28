@@ -36,7 +36,6 @@ function genId() {
   return r;
 }
 
-// ============ RATE LIMITER ============
 const hits = new Map();
 const WINDOW = 15 * 60 * 1000;
 const MAX = 100;
@@ -63,8 +62,6 @@ setInterval(() => {
     if (now - r.start > WINDOW) hits.delete(ip);
   }
 }, 5 * 60 * 1000);
-
-// ============ 6 CAPAS DE PROTECCION ============
 
 function obfuscate(c) {
   try {
@@ -118,8 +115,6 @@ function generateDecryptor(encrypted) {
   return 'local function h(s)local r=""for i=1,#s,2 do r=r..string.char(tonumber(s:sub(i,i+1),16))end return r end local function r(s)local r=""for i=1,#s do r=r..string.char(string.byte(s,i)-3)end return r end local function b(s)return game:HttpDecode(s,"base64")end local function v(s)local r=""for i=#s,1,-1 do r=r..s:sub(i,i)end return r end local function x(s,k)local p={}for t in s:gmatch("[^|]+")do table.insert(p,t)end local e=b(p[2])local r=""for i=1,#e do local c=string.byte(e,i)local kc=string.byte(k,((i-1)%#k)+1)r=r..string.char(c~kc)end return r end local function d(s)local a=h(s)local b=r(a)local c=b(b)local d=v(c)local p={}for t in d:gmatch("[^|]+")do table.insert(p,t)end local e=x(d,p[1])return e end local s=d("' + encrypted + '")loadstring(s)()';
 }
 
-// ============ BLOQUEAR BROWSERS ============
-
 function blockBrowsers(req, res, next) {
   if (!req.path.includes('/loaders/')) return next();
   const ua = req.headers["user-agent"] || "";
@@ -160,7 +155,7 @@ h1{font-size:28px;font-weight:700;background:linear-gradient(135deg,#a78bfa,#7c3
 <div class="badge">🔐 Protected</div>
 <div class="code-box" id="codeDisplay">${loaderCode}</div>
 <button class="btn-copy" id="copyBtn" onclick="copyCode()">📋 Copy Code</button>
-<div class="footer">Protected by <a href="https://${DOMAIN}" target="_blank">PaltidxR</a> v3.0</div>
+<div class="footer">Protected by <a href="https://${DOMAIN}" target="_blank">PaltidxR</a>protector</div>
 </div>
 <script>
 const codeToCopy = "${loaderCode}";
@@ -197,8 +192,6 @@ document.getElementById('codeDisplay').addEventListener('click', copyCode);
   next();
 }
 
-// ============ MIDDLEWARE ============
-
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
@@ -223,8 +216,6 @@ function validateScriptId(req, res, next) {
   }
   next();
 }
-
-// ============ RUTAS ============
 
 app.get("/", (req, res) => {
   res.sendFile(__dirname + "/index.html");
@@ -357,8 +348,6 @@ app.get("/health", (req, res) => {
   }
 });
 
-// ============ INICIAR SERVIDOR ============
-
 if (!fs.existsSync(__dirname + "/scripts")) {
   fs.mkdirSync(__dirname + "/scripts");
 }
@@ -372,5 +361,7 @@ app.listen(PORT, () => {
   console.log(`║  API: /api/scripts                  ║`);
   console.log(`║  Loader: /files/v1/loaders/{id}    ║`);
   console.log(`║  Protection: 6 layers              ║`);
+  console.log(`║  Sitemap: /sitemap.xml             ║`);
+  console.log(`║  Robots: /robots.txt               ║`);
   console.log(`╚═══════════════════════════════════════╝\n`);
 });
