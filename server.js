@@ -77,6 +77,338 @@ setInterval(() => {
   }
 }, 5 * 60 * 1000);
 
+// ============ 8 CAPAS DE ENCRIPTACION ============
+
+function layer1_obfuscate(code) {
+  let obfuscated = code;
+  obfuscated = obfuscated.replace(/--[^\n]*/g, '');
+  
+  const keywords = ['local', 'function', 'if', 'then', 'else', 'elseif', 'end', 'for', 'while', 'do', 'return', 'break', 'true', 'false', 'nil', 'and', 'or', 'not', 'in', 'repeat', 'until', 'goto'];
+  const varMap = {};
+  const varRegex = /[a-zA-Z_][a-zA-Z0-9_]*/g;
+  const matches = obfuscated.match(varRegex) || [];
+  const uniqueVars = [...new Set(matches)];
+  
+  uniqueVars.forEach((v, i) => {
+    if (!keywords.includes(v) && v.length > 1) {
+      const newName = '_' + crypto.randomBytes(3).toString('hex');
+      varMap[v] = newName;
+    }
+  });
+  
+  Object.keys(varMap).forEach(key => {
+    const regex = new RegExp(`\\b${key}\\b`, 'g');
+    obfuscated = obfuscated.replace(regex, varMap[key]);
+  });
+  
+  obfuscated = obfuscated.replace(/\s+/g, ' ');
+  return obfuscated;
+}
+
+function layer2_xor(data) {
+  const key = crypto.randomBytes(8).toString('hex');
+  let result = '';
+  for (let i = 0; i < data.length; i++) {
+    const charCode = data.charCodeAt(i);
+    const keyChar = key.charCodeAt(i % key.length);
+    result += String.fromCharCode(charCode ^ keyChar);
+  }
+  return key + '|' + Buffer.from(result).toString('base64');
+}
+
+function layer3_reverse(data) {
+  return data.split('').reverse().join('');
+}
+
+function layer4_base64(data) {
+  return Buffer.from(data).toString('base64');
+}
+
+function layer5_aes(data) {
+  const key = crypto.randomBytes(16).toString('hex');
+  const cipher = crypto.createCipheriv('aes-128-cbc', Buffer.from(key, 'hex'), Buffer.from(key.substring(0, 16), 'hex'));
+  let encrypted = cipher.update(data, 'utf8', 'base64');
+  encrypted += cipher.final('base64');
+  return key + ':' + encrypted;
+}
+
+function layer6_rotate(data) {
+  let rotated = '';
+  for (let i = 0; i < data.length; i++) {
+    const charCode = data.charCodeAt(i);
+    rotated += String.fromCharCode(charCode + 3);
+  }
+  return rotated;
+}
+
+function layer7_binary(data) {
+  let binary = '';
+  for (let i = 0; i < data.length; i++) {
+    binary += data.charCodeAt(i).toString(2).padStart(8, '0');
+  }
+  return binary;
+}
+
+function layer8_hex(data) {
+  let hex = '';
+  for (let i = 0; i < data.length; i++) {
+    hex += data.charCodeAt(i).toString(16).padStart(2, '0');
+  }
+  return hex;
+}
+
+// ============ SISTEMAS DE PROTECCION ============
+
+// Sistema 1: Anti-Sintaxis
+function antiSyntaxProtection(code) {
+  let protectedCode = code;
+  protectedCode = protectedCode.replace(/["']/g, '');
+  protectedCode = protectedCode.replace(/;/g, '');
+  protectedCode = protectedCode.replace(/\(/g, ' [ ');
+  protectedCode = protectedCode.replace(/\)/g, ' ] ');
+  protectedCode = protectedCode.replace(/\{/g, ' << ');
+  protectedCode = protectedCode.replace(/\}/g, ' >> ');
+  protectedCode = protectedCode.replace(/\[/g, ' { ');
+  protectedCode = protectedCode.replace(/\]/g, ' } ');
+  protectedCode = protectedCode.replace(/\./g, ' :: ');
+  protectedCode = protectedCode.replace(/,/g, ' , ');
+  protectedCode = protectedCode.replace(/=/g, ' == ');
+  protectedCode = protectedCode.replace(/\+/g, ' ++ ');
+  protectedCode = protectedCode.replace(/-/g, ' -- ');
+  protectedCode = protectedCode.replace(/\*/g, ' ** ');
+  protectedCode = protectedCode.replace(/\//g, ' // ');
+  return protectedCode;
+}
+
+// Sistema 2: Anti-HttpGet Detection
+function antiHttpGetProtection(code) {
+  let protectedCode = code;
+  const replacements = {
+    'game:HttpGet': 'game:GetAsync',
+    'HttpGet': 'HttpRequest',
+    'loadstring': 'load',
+    'pcall': 'xpcall',
+    'spawn': 'delay',
+    'wait': 'task.wait',
+    'game': 'getfenv()',
+    'print': 'warn',
+    'error': 'assert'
+  };
+  
+  Object.keys(replacements).forEach(key => {
+    const regex = new RegExp(key, 'g');
+    protectedCode = protectedCode.replace(regex, replacements[key]);
+  });
+  
+  return protectedCode;
+}
+
+// Sistema 3: Ordenamiento y regeneración
+function regenerateAndOrder(code) {
+  let lines = code.split('\n');
+  lines = lines.filter(line => line.trim() !== '');
+  
+  // Reordenar aleatoriamente
+  for (let i = lines.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [lines[i], lines[j]] = [lines[j], lines[i]];
+  }
+  
+  // Agregar código regenerador
+  const regenerator = `
+local function regenerate()
+  local __a = ${Math.random() * 1000}
+  local __b = ${Math.random() * 1000}
+  local __c = ${Math.random() * 1000}
+  return __a + __b + __c
+end
+regenerate()
+`;
+  
+  lines.push(regenerator);
+  return lines.join('\n');
+}
+
+// ============ ENCRIPTACION COMPLETA ============
+
+function encryptComplete(script) {
+  let encrypted = script;
+  
+  // Sistema 1: Anti-Sintaxis
+  encrypted = antiSyntaxProtection(encrypted);
+  
+  // Sistema 2: Anti-HttpGet
+  encrypted = antiHttpGetProtection(encrypted);
+  
+  // Sistema 3: Regenerar y ordenar
+  encrypted = regenerateAndOrder(encrypted);
+  
+  // Capa 1: Ofuscacion
+  encrypted = layer1_obfuscate(encrypted);
+  
+  // Capa 2: XOR
+  encrypted = layer2_xor(encrypted);
+  
+  // Capa 3: Reverso
+  encrypted = layer3_reverse(encrypted);
+  
+  // Capa 4: Base64
+  encrypted = layer4_base64(encrypted);
+  
+  // Capa 5: AES
+  encrypted = layer5_aes(encrypted);
+  
+  // Capa 6: Rotacion
+  encrypted = layer6_rotate(encrypted);
+  
+  // Capa 7: Binario
+  encrypted = layer7_binary(encrypted);
+  
+  // Capa 8: Hexadecimal
+  encrypted = layer8_hex(encrypted);
+  
+  return encrypted;
+}
+
+// ============ DECRYPTOR COMPLETO ============
+
+function generateDecryptor(scriptId, encryptedData) {
+  return `
+-- PaltidxR Decryptor v3.0
+local function layer8_hex_decrypt(data)
+  local result = ""
+  for i = 1, #data, 2 do
+    result = result .. string.char(tonumber(data:sub(i, i+1), 16))
+  end
+  return result
+end
+
+local function layer7_binary_decrypt(data)
+  local result = ""
+  for i = 1, #data, 8 do
+    local byte = data:sub(i, i+7)
+    result = result .. string.char(tonumber(byte, 2))
+  end
+  return result
+end
+
+local function layer6_rotate_decrypt(data)
+  local result = ""
+  for i = 1, #data do
+    result = result .. string.char(string.byte(data, i) - 3)
+  end
+  return result
+end
+
+local function layer5_aes_decrypt(data, key)
+  local cipher = require("crypto").createDecipheriv("aes-128-cbc", key, key:sub(1, 16))
+  local decrypted = cipher:update(data, "base64", "utf8")
+  decrypted = decrypted .. cipher:final("utf8")
+  return decrypted
+end
+
+local function layer4_base64_decrypt(data)
+  return game:HttpDecode(data, "base64")
+end
+
+local function layer3_reverse_decrypt(data)
+  local result = ""
+  for i = #data, 1, -1 do
+    result = result .. data:sub(i, i)
+  end
+  return result
+end
+
+local function layer2_xor_decrypt(data, key)
+  local parts = {}
+  for part in data:gmatch("[^|]+") do
+    table.insert(parts, part)
+  end
+  local encrypted = game:HttpDecode(parts[2], "base64")
+  local result = ""
+  for i = 1, #encrypted do
+    local charCode = string.byte(encrypted, i)
+    local keyChar = string.byte(key, ((i-1) % #key) + 1)
+    result = result .. string.char(charCode ~ keyChar)
+  end
+  return result
+end
+
+local function layer1_obfuscate_decrypt(data)
+  return data
+end
+
+local function decryptComplete(encrypted)
+  -- Capa 8: Hex
+  local layer8 = layer8_hex_decrypt(encrypted)
+  
+  -- Capa 7: Binario
+  local layer7 = layer7_binary_decrypt(layer8)
+  
+  -- Capa 6: Rotacion
+  local layer6 = layer6_rotate_decrypt(layer7)
+  
+  -- Capa 5: AES
+  local key = layer6:sub(1, 16)
+  local data = layer6:sub(17)
+  local layer5 = layer5_aes_decrypt(data, key)
+  
+  -- Capa 4: Base64
+  local layer4 = layer4_base64_decrypt(layer5)
+  
+  -- Capa 3: Reverso
+  local layer3 = layer3_reverse_decrypt(layer4)
+  
+  -- Capa 2: XOR
+  local xorParts = {}
+  for part in layer3:gmatch("[^|]+") do
+    table.insert(xorParts, part)
+  end
+  local layer2 = layer2_xor_decrypt(layer3, xorParts[1])
+  
+  -- Capa 1: Obfuscate (ejecutar directamente)
+  return layer2
+end
+
+local scriptId = "${scriptId}"
+local encrypted = "${encryptedData}"
+local script = decryptComplete(encrypted)
+
+-- Sistema 1: Anti-Sintaxis (revertir)
+script = script:gsub(" %[ ", "(")
+script = script:gsub(" %] ", ")")
+script = script:gsub(" << ", "{")
+script = script:gsub(" >> ", "}")
+script = script:gsub(" { ", "[")
+script = script:gsub(" } ", "]")
+script = script:gsub(" :: ", ".")
+script = script:gsub(" , ", ",")
+script = script:gsub(" == ", "=")
+script = script:gsub(" ++ ", "+")
+script = script:gsub(" -- ", "-")
+script = script:gsub(" \\*\\* ", "*")
+script = script:gsub(" // ", "/")
+
+-- Sistema 2: Anti-HttpGet (revertir)
+local replacements = {
+  ['game:GetAsync'] = 'game:HttpGet',
+  ['HttpRequest'] = 'HttpGet',
+  ['load'] = 'loadstring',
+  ['xpcall'] = 'pcall',
+  ['delay'] = 'spawn',
+  ['task.wait'] = 'wait',
+  ['getfenv()'] = 'game',
+  ['warn'] = 'print',
+  ['assert'] = 'error'
+}
+for k, v in pairs(replacements) do
+  script = script:gsub(k, v)
+end
+
+loadstring(script)()
+`;
+}
+
 function blockBrowsers(req, res, next) {
   if (!req.path.includes('/files/v1/loaders/')) {
     return next();
@@ -91,7 +423,6 @@ function blockBrowsers(req, res, next) {
     uaLower.includes("safari") ||
     uaLower.includes("edg") ||
     uaLower.includes("opr") ||
-    uaLower.includes("trident") ||
     uaLower.includes("webkit");
 
   const isExecutor = 
@@ -106,12 +437,7 @@ function blockBrowsers(req, res, next) {
     uaLower.includes("evon") ||
     uaLower.includes("celery") ||
     uaLower.includes("hydrogen") ||
-    uaLower.includes("swift") ||
-    uaLower.includes("sirius") ||
-    uaLower.includes("paltidxr") ||
-    uaLower.includes("electron") ||
-    uaLower.includes("wearedevs") ||
-    uaLower.includes("luarmor");
+    uaLower.includes("paltidxr");
 
   const isUnknown = !ua || ua.length < 5;
 
@@ -124,7 +450,7 @@ function blockBrowsers(req, res, next) {
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Access Denied - PaltidxR</title>
+    <title>Access Denied</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -208,52 +534,23 @@ function blockBrowsers(req, res, next) {
             text-decoration: none;
         }
         .footer-link a:hover { text-decoration: underline; }
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%) translateY(100px);
-            background: rgba(20, 21, 31, 0.95);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(52, 211, 153, 0.3);
-            border-radius: 12px;
-            padding: 12px 24px;
-            color: #e0e0e0;
-            font-size: 14px;
-            z-index: 1000;
-            opacity: 0;
-            transition: all 0.5s ease;
-        }
-        .toast.show {
-            transform: translateX(-50%) translateY(0);
-            opacity: 1;
-        }
     </style>
 </head>
 <body>
     <div class="glass-card">
         <div class="icon">🔒</div>
-        <h1>You Are Blocked</h1>
-        <p class="subtitle">Your browser has been detected and access is restricted.</p>
-        <div class="badge">Browser Detected</div>
+        <h1>Access Denied</h1>
+        <p class="subtitle">This content is protected</p>
+        <div class="badge">Protected</div>
 
         <div class="code-box" id="codeDisplay">${loaderCode}</div>
 
-        <button class="btn-copy" id="copyBtn" onclick="copyCode()">
-            <i class="fa-regular fa-copy"></i>
-            Copy Code
-        </button>
+        <button class="btn-copy" id="copyBtn" onclick="copyCode()">Copy Code</button>
 
         <div class="footer-link">
-            This code has been protected by API hosting protection.<br>
-            If you want to protect your code too, go to<br>
+            Protected by PaltidxR<br>
             <a href="https://${DOMAIN}" target="_blank">https://${DOMAIN}</a>
         </div>
-    </div>
-
-    <div id="toast" class="toast">
-        <i class="fa-regular fa-circle-check mr-2" style="color:#34d399;"></i>
-        <span id="toastMessage">Copied to clipboard!</span>
     </div>
 
     <script>
@@ -263,11 +560,10 @@ function blockBrowsers(req, res, next) {
             navigator.clipboard.writeText(codeToCopy).then(() => {
                 const btn = document.getElementById('copyBtn');
                 btn.classList.add('copied');
-                btn.innerHTML = '<i class="fa-regular fa-check"></i> Copied!';
-                showToast('Code copied to clipboard!');
+                btn.innerHTML = 'Copied!';
                 setTimeout(() => {
                     btn.classList.remove('copied');
-                    btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy Code';
+                    btn.innerHTML = 'Copy Code';
                 }, 2500);
             }).catch(() => {
                 const textarea = document.createElement('textarea');
@@ -276,16 +572,14 @@ function blockBrowsers(req, res, next) {
                 textarea.select();
                 document.execCommand('copy');
                 document.body.removeChild(textarea);
-                showToast('Code copied to clipboard!');
+                const btn = document.getElementById('copyBtn');
+                btn.classList.add('copied');
+                btn.innerHTML = 'Copied!';
+                setTimeout(() => {
+                    btn.classList.remove('copied');
+                    btn.innerHTML = 'Copy Code';
+                }, 2500);
             });
-        }
-
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            const msg = document.getElementById('toastMessage');
-            msg.textContent = message;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2500);
         }
     </script>
 </body>
@@ -332,12 +626,6 @@ app.get("/sitemap.xml", (req, res) => {
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
-  <url>
-    <loc>https://${DOMAIN}/health</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
 </urlset>`;
   res.header('Content-Type', 'application/xml');
   res.send(sitemap);
@@ -377,25 +665,17 @@ app.post("/api/scripts", rateLimiter, (req, res) => {
     const fileName = `${scriptId}.lua`;
     const userScriptName = name || 'unnamed';
     
-    const protectedScript = `--[[ PaltidxR Protected ]]--
---[[ Script ID: ${scriptId} ]]--
---[[ Protection: PaltidxR ACTIVE ]]--
-
---[[ ⚠️ DO NOT MODIFY THIS SCRIPT ⚠️ ]]--
---[[ Your script starts here ]]--
-
-${script}
-
---[[ End of script ]]--
---[[ PaltidxR | ID: ${scriptId} ]]--`;
+    const encrypted = encryptComplete(script);
     
     scriptsDB[fileName] = {
       id: fileName,
       name: userScriptName,
       scriptId: scriptId,
-      content: protectedScript,
+      content: encrypted,
       created: new Date().toISOString(),
-      paltidxr: true
+      paltidxr: true,
+      protection: "8-layers",
+      version: "3.0.0"
     };
     
     saveScripts(scriptsDB);
@@ -409,7 +689,9 @@ ${script}
       name: userScriptName,
       created: new Date().toISOString(),
       paltidxr: true,
-      message: "Script hosted successfully with PaltidxR protection"
+      protection: "8 layers encrypted",
+      version: "3.0.0",
+      message: "Script hosted with 8 layers of encryption"
     });
     
   } catch (error) {
@@ -430,7 +712,9 @@ app.get("/files/v1/loaders/:scriptId",
     if (scriptsDB[scriptId]) {
       const scriptData = scriptsDB[scriptId];
       console.log(`[${new Date().toISOString()}] Script served: ${scriptId} (${scriptData.name})`);
-      res.type("text").send(scriptData.content);
+      
+      const decryptor = generateDecryptor(scriptId, scriptData.content);
+      res.type("text").send(decryptor);
     } else {
       console.log(`[${new Date().toISOString()}] Script not found: ${scriptId}`);
       res.status(404).type("text").send("Script not found");
@@ -445,13 +729,15 @@ app.get("/api/scripts", rateLimiter, (req, res) => {
     scriptId: scriptsDB[key].scriptId,
     name: scriptsDB[key].name,
     created: scriptsDB[key].created,
-    paltidxr: scriptsDB[key].paltidxr || false
+    paltidxr: scriptsDB[key].paltidxr || false,
+    protection: scriptsDB[key].protection || "standard"
   }));
   
   res.json({ 
     scripts: scriptList,
     count: scriptList.length,
-    paltidxr: true
+    paltidxr: true,
+    version: "3.0.0"
   });
 });
 
@@ -462,10 +748,10 @@ app.get("/health", (req, res) => {
   res.json({ 
     status: "online", 
     service: "PaltidxR API",
-    version: "2.0.0",
+    version: "3.0.0",
     scripts: scriptCount,
     paltidxr: true,
-    uniqueIds: true,
+    protection: "8 layers",
     timestamp: new Date().toISOString()
   });
 });
@@ -475,8 +761,9 @@ if (!fs.existsSync(path.join(__dirname, "scripts"))) {
 }
 
 app.listen(PORT, () => {
-  console.log(`PaltidxR running on port ${PORT}`);
+  console.log(`PaltidxR v3.0 running on port ${PORT}`);
   console.log(`Domain: https://${DOMAIN}`);
   console.log(`API: https://${DOMAIN}/api/scripts`);
   console.log(`URL: https://${DOMAIN}/files/v1/loaders/{id}.lua`);
+  console.log(`Protection: 8 layers encryption`);
 });
