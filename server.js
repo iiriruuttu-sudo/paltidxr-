@@ -80,142 +80,177 @@ setInterval(() => {
 // ============ 8 CAPAS DE ENCRIPTACION ============
 
 function layer1_obfuscate(code) {
-  let obfuscated = code;
-  obfuscated = obfuscated.replace(/--[^\n]*/g, '');
-  
-  const keywords = ['local', 'function', 'if', 'then', 'else', 'elseif', 'end', 'for', 'while', 'do', 'return', 'break', 'true', 'false', 'nil', 'and', 'or', 'not', 'in', 'repeat', 'until', 'goto'];
-  const varMap = {};
-  const varRegex = /[a-zA-Z_][a-zA-Z0-9_]*/g;
-  const matches = obfuscated.match(varRegex) || [];
-  const uniqueVars = [...new Set(matches)];
-  
-  uniqueVars.forEach((v, i) => {
-    if (!keywords.includes(v) && v.length > 1) {
-      const newName = '_' + crypto.randomBytes(3).toString('hex');
-      varMap[v] = newName;
-    }
-  });
-  
-  Object.keys(varMap).forEach(key => {
-    const regex = new RegExp(`\\b${key}\\b`, 'g');
-    obfuscated = obfuscated.replace(regex, varMap[key]);
-  });
-  
-  obfuscated = obfuscated.replace(/\s+/g, ' ');
-  return obfuscated;
+  try {
+    let obfuscated = code;
+    obfuscated = obfuscated.replace(/--[^\n]*/g, '');
+    
+    const keywords = ['local', 'function', 'if', 'then', 'else', 'elseif', 'end', 'for', 'while', 'do', 'return', 'break', 'true', 'false', 'nil', 'and', 'or', 'not', 'in', 'repeat', 'until', 'goto'];
+    const varMap = {};
+    const varRegex = /[a-zA-Z_][a-zA-Z0-9_]*/g;
+    const matches = obfuscated.match(varRegex) || [];
+    const uniqueVars = [...new Set(matches)];
+    
+    uniqueVars.forEach((v, i) => {
+      if (!keywords.includes(v) && v.length > 1) {
+        const newName = '_' + crypto.randomBytes(3).toString('hex');
+        varMap[v] = newName;
+      }
+    });
+    
+    Object.keys(varMap).forEach(key => {
+      const regex = new RegExp(`\\b${key}\\b`, 'g');
+      obfuscated = obfuscated.replace(regex, varMap[key]);
+    });
+    
+    obfuscated = obfuscated.replace(/\s+/g, ' ');
+    return obfuscated;
+  } catch (e) {
+    return code;
+  }
 }
 
 function layer2_xor(data) {
-  const key = crypto.randomBytes(8).toString('hex');
-  let result = '';
-  for (let i = 0; i < data.length; i++) {
-    const charCode = data.charCodeAt(i);
-    const keyChar = key.charCodeAt(i % key.length);
-    result += String.fromCharCode(charCode ^ keyChar);
+  try {
+    const key = crypto.randomBytes(8).toString('hex');
+    let result = '';
+    for (let i = 0; i < data.length; i++) {
+      const charCode = data.charCodeAt(i);
+      const keyChar = key.charCodeAt(i % key.length);
+      result += String.fromCharCode(charCode ^ keyChar);
+    }
+    return key + '|' + Buffer.from(result).toString('base64');
+  } catch (e) {
+    return data;
   }
-  return key + '|' + Buffer.from(result).toString('base64');
 }
 
 function layer3_reverse(data) {
-  return data.split('').reverse().join('');
+  try {
+    return data.split('').reverse().join('');
+  } catch (e) {
+    return data;
+  }
 }
 
 function layer4_base64(data) {
-  return Buffer.from(data).toString('base64');
+  try {
+    return Buffer.from(data).toString('base64');
+  } catch (e) {
+    return data;
+  }
 }
 
 function layer5_aes(data) {
-  const key = crypto.randomBytes(16).toString('hex');
-  const cipher = crypto.createCipheriv('aes-128-cbc', Buffer.from(key, 'hex'), Buffer.from(key.substring(0, 16), 'hex'));
-  let encrypted = cipher.update(data, 'utf8', 'base64');
-  encrypted += cipher.final('base64');
-  return key + ':' + encrypted;
+  try {
+    const key = crypto.randomBytes(16).toString('hex');
+    const cipher = crypto.createCipheriv('aes-128-cbc', Buffer.from(key, 'hex'), Buffer.from(key.substring(0, 16), 'hex'));
+    let encrypted = cipher.update(data, 'utf8', 'base64');
+    encrypted += cipher.final('base64');
+    return key + ':' + encrypted;
+  } catch (e) {
+    return data;
+  }
 }
 
 function layer6_rotate(data) {
-  let rotated = '';
-  for (let i = 0; i < data.length; i++) {
-    const charCode = data.charCodeAt(i);
-    rotated += String.fromCharCode(charCode + 3);
+  try {
+    let rotated = '';
+    for (let i = 0; i < data.length; i++) {
+      const charCode = data.charCodeAt(i);
+      rotated += String.fromCharCode(charCode + 3);
+    }
+    return rotated;
+  } catch (e) {
+    return data;
   }
-  return rotated;
 }
 
 function layer7_binary(data) {
-  let binary = '';
-  for (let i = 0; i < data.length; i++) {
-    binary += data.charCodeAt(i).toString(2).padStart(8, '0');
+  try {
+    let binary = '';
+    for (let i = 0; i < data.length; i++) {
+      binary += data.charCodeAt(i).toString(2).padStart(8, '0');
+    }
+    return binary;
+  } catch (e) {
+    return data;
   }
-  return binary;
 }
 
 function layer8_hex(data) {
-  let hex = '';
-  for (let i = 0; i < data.length; i++) {
-    hex += data.charCodeAt(i).toString(16).padStart(2, '0');
+  try {
+    let hex = '';
+    for (let i = 0; i < data.length; i++) {
+      hex += data.charCodeAt(i).toString(16).padStart(2, '0');
+    }
+    return hex;
+  } catch (e) {
+    return data;
   }
-  return hex;
 }
 
 // ============ SISTEMAS DE PROTECCION ============
 
-// Sistema 1: Anti-Sintaxis
 function antiSyntaxProtection(code) {
-  let protectedCode = code;
-  protectedCode = protectedCode.replace(/["']/g, '');
-  protectedCode = protectedCode.replace(/;/g, '');
-  protectedCode = protectedCode.replace(/\(/g, ' [ ');
-  protectedCode = protectedCode.replace(/\)/g, ' ] ');
-  protectedCode = protectedCode.replace(/\{/g, ' << ');
-  protectedCode = protectedCode.replace(/\}/g, ' >> ');
-  protectedCode = protectedCode.replace(/\[/g, ' { ');
-  protectedCode = protectedCode.replace(/\]/g, ' } ');
-  protectedCode = protectedCode.replace(/\./g, ' :: ');
-  protectedCode = protectedCode.replace(/,/g, ' , ');
-  protectedCode = protectedCode.replace(/=/g, ' == ');
-  protectedCode = protectedCode.replace(/\+/g, ' ++ ');
-  protectedCode = protectedCode.replace(/-/g, ' -- ');
-  protectedCode = protectedCode.replace(/\*/g, ' ** ');
-  protectedCode = protectedCode.replace(/\//g, ' // ');
-  return protectedCode;
-}
-
-// Sistema 2: Anti-HttpGet Detection
-function antiHttpGetProtection(code) {
-  let protectedCode = code;
-  const replacements = {
-    'game:HttpGet': 'game:GetAsync',
-    'HttpGet': 'HttpRequest',
-    'loadstring': 'load',
-    'pcall': 'xpcall',
-    'spawn': 'delay',
-    'wait': 'task.wait',
-    'game': 'getfenv()',
-    'print': 'warn',
-    'error': 'assert'
-  };
-  
-  Object.keys(replacements).forEach(key => {
-    const regex = new RegExp(key, 'g');
-    protectedCode = protectedCode.replace(regex, replacements[key]);
-  });
-  
-  return protectedCode;
-}
-
-// Sistema 3: Ordenamiento y regeneración
-function regenerateAndOrder(code) {
-  let lines = code.split('\n');
-  lines = lines.filter(line => line.trim() !== '');
-  
-  // Reordenar aleatoriamente
-  for (let i = lines.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [lines[i], lines[j]] = [lines[j], lines[i]];
+  try {
+    let protectedCode = code;
+    protectedCode = protectedCode.replace(/["']/g, '');
+    protectedCode = protectedCode.replace(/;/g, '');
+    protectedCode = protectedCode.replace(/\(/g, ' [ ');
+    protectedCode = protectedCode.replace(/\)/g, ' ] ');
+    protectedCode = protectedCode.replace(/\{/g, ' << ');
+    protectedCode = protectedCode.replace(/\}/g, ' >> ');
+    protectedCode = protectedCode.replace(/\[/g, ' { ');
+    protectedCode = protectedCode.replace(/\]/g, ' } ');
+    protectedCode = protectedCode.replace(/\./g, ' :: ');
+    protectedCode = protectedCode.replace(/,/g, ' , ');
+    protectedCode = protectedCode.replace(/=/g, ' == ');
+    protectedCode = protectedCode.replace(/\+/g, ' ++ ');
+    protectedCode = protectedCode.replace(/-/g, ' -- ');
+    protectedCode = protectedCode.replace(/\*/g, ' ** ');
+    protectedCode = protectedCode.replace(/\//g, ' // ');
+    return protectedCode;
+  } catch (e) {
+    return code;
   }
-  
-  // Agregar código regenerador
-  const regenerator = `
+}
+
+function antiHttpGetProtection(code) {
+  try {
+    let protectedCode = code;
+    const replacements = {
+      'game:HttpGet': 'game:GetAsync',
+      'HttpGet': 'HttpRequest',
+      'loadstring': 'load',
+      'pcall': 'xpcall',
+      'spawn': 'delay',
+      'wait': 'task.wait',
+      'print': 'warn',
+      'error': 'assert'
+    };
+    
+    Object.keys(replacements).forEach(key => {
+      const regex = new RegExp(key, 'g');
+      protectedCode = protectedCode.replace(regex, replacements[key]);
+    });
+    
+    return protectedCode;
+  } catch (e) {
+    return code;
+  }
+}
+
+function regenerateAndOrder(code) {
+  try {
+    let lines = code.split('\n');
+    lines = lines.filter(line => line.trim() !== '');
+    
+    for (let i = lines.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [lines[i], lines[j]] = [lines[j], lines[i]];
+    }
+    
+    const regenerator = `
 local function regenerate()
   local __a = ${Math.random() * 1000}
   local __b = ${Math.random() * 1000}
@@ -224,50 +259,36 @@ local function regenerate()
 end
 regenerate()
 `;
-  
-  lines.push(regenerator);
-  return lines.join('\n');
+    
+    lines.push(regenerator);
+    return lines.join('\n');
+  } catch (e) {
+    return code;
+  }
 }
 
 // ============ ENCRIPTACION COMPLETA ============
 
 function encryptComplete(script) {
-  let encrypted = script;
-  
-  // Sistema 1: Anti-Sintaxis
-  encrypted = antiSyntaxProtection(encrypted);
-  
-  // Sistema 2: Anti-HttpGet
-  encrypted = antiHttpGetProtection(encrypted);
-  
-  // Sistema 3: Regenerar y ordenar
-  encrypted = regenerateAndOrder(encrypted);
-  
-  // Capa 1: Ofuscacion
-  encrypted = layer1_obfuscate(encrypted);
-  
-  // Capa 2: XOR
-  encrypted = layer2_xor(encrypted);
-  
-  // Capa 3: Reverso
-  encrypted = layer3_reverse(encrypted);
-  
-  // Capa 4: Base64
-  encrypted = layer4_base64(encrypted);
-  
-  // Capa 5: AES
-  encrypted = layer5_aes(encrypted);
-  
-  // Capa 6: Rotacion
-  encrypted = layer6_rotate(encrypted);
-  
-  // Capa 7: Binario
-  encrypted = layer7_binary(encrypted);
-  
-  // Capa 8: Hexadecimal
-  encrypted = layer8_hex(encrypted);
-  
-  return encrypted;
+  try {
+    let encrypted = script;
+    
+    encrypted = antiSyntaxProtection(encrypted);
+    encrypted = antiHttpGetProtection(encrypted);
+    encrypted = regenerateAndOrder(encrypted);
+    encrypted = layer1_obfuscate(encrypted);
+    encrypted = layer2_xor(encrypted);
+    encrypted = layer3_reverse(encrypted);
+    encrypted = layer4_base64(encrypted);
+    encrypted = layer5_aes(encrypted);
+    encrypted = layer6_rotate(encrypted);
+    encrypted = layer7_binary(encrypted);
+    encrypted = layer8_hex(encrypted);
+    
+    return encrypted;
+  } catch (e) {
+    return script;
+  }
 }
 
 // ============ DECRYPTOR COMPLETO ============
@@ -334,47 +355,29 @@ local function layer2_xor_decrypt(data, key)
   return result
 end
 
-local function layer1_obfuscate_decrypt(data)
-  return data
-end
-
 local function decryptComplete(encrypted)
-  -- Capa 8: Hex
   local layer8 = layer8_hex_decrypt(encrypted)
-  
-  -- Capa 7: Binario
   local layer7 = layer7_binary_decrypt(layer8)
-  
-  -- Capa 6: Rotacion
   local layer6 = layer6_rotate_decrypt(layer7)
   
-  -- Capa 5: AES
   local key = layer6:sub(1, 16)
   local data = layer6:sub(17)
   local layer5 = layer5_aes_decrypt(data, key)
   
-  -- Capa 4: Base64
   local layer4 = layer4_base64_decrypt(layer5)
-  
-  -- Capa 3: Reverso
   local layer3 = layer3_reverse_decrypt(layer4)
   
-  -- Capa 2: XOR
   local xorParts = {}
   for part in layer3:gmatch("[^|]+") do
     table.insert(xorParts, part)
   end
   local layer2 = layer2_xor_decrypt(layer3, xorParts[1])
   
-  -- Capa 1: Obfuscate (ejecutar directamente)
   return layer2
 end
 
-local scriptId = "${scriptId}"
-local encrypted = "${encryptedData}"
-local script = decryptComplete(encrypted)
+local script = decryptComplete("${encryptedData}")
 
--- Sistema 1: Anti-Sintaxis (revertir)
 script = script:gsub(" %[ ", "(")
 script = script:gsub(" %] ", ")")
 script = script:gsub(" << ", "{")
@@ -389,7 +392,6 @@ script = script:gsub(" -- ", "-")
 script = script:gsub(" \\*\\* ", "*")
 script = script:gsub(" // ", "/")
 
--- Sistema 2: Anti-HttpGet (revertir)
 local replacements = {
   ['game:GetAsync'] = 'game:HttpGet',
   ['HttpRequest'] = 'HttpGet',
@@ -397,7 +399,6 @@ local replacements = {
   ['xpcall'] = 'pcall',
   ['delay'] = 'spawn',
   ['task.wait'] = 'wait',
-  ['getfenv()'] = 'game',
   ['warn'] = 'print',
   ['assert'] = 'error'
 }
@@ -696,7 +697,7 @@ app.post("/api/scripts", rateLimiter, (req, res) => {
     
   } catch (error) {
     console.error('Error:', error);
-    res.status(500).json({ success: false, error: "Internal server error" });
+    res.status(500).json({ success: false, error: "Internal server error: " + error.message });
   }
 });
 
@@ -705,57 +706,71 @@ app.get("/files/v1/loaders/:scriptId",
   blockBrowsers, 
   validateScriptId, 
   (req, res) => {
-    const scriptId = req.params.scriptId;
-    
-    scriptsDB = loadScripts();
-    
-    if (scriptsDB[scriptId]) {
-      const scriptData = scriptsDB[scriptId];
-      console.log(`[${new Date().toISOString()}] Script served: ${scriptId} (${scriptData.name})`);
+    try {
+      const scriptId = req.params.scriptId;
       
-      const decryptor = generateDecryptor(scriptId, scriptData.content);
-      res.type("text").send(decryptor);
-    } else {
-      console.log(`[${new Date().toISOString()}] Script not found: ${scriptId}`);
-      res.status(404).type("text").send("Script not found");
+      scriptsDB = loadScripts();
+      
+      if (scriptsDB[scriptId]) {
+        const scriptData = scriptsDB[scriptId];
+        console.log(`[${new Date().toISOString()}] Script served: ${scriptId} (${scriptData.name})`);
+        
+        const decryptor = generateDecryptor(scriptId, scriptData.content);
+        res.type("text").send(decryptor);
+      } else {
+        console.log(`[${new Date().toISOString()}] Script not found: ${scriptId}`);
+        res.status(404).type("text").send("Script not found");
+      }
+    } catch (error) {
+      console.error('Error serving script:', error);
+      res.status(500).type("text").send("Error serving script");
     }
   }
 );
 
 app.get("/api/scripts", rateLimiter, (req, res) => {
-  scriptsDB = loadScripts();
-  const scriptList = Object.keys(scriptsDB).map(key => ({
-    id: scriptsDB[key].id,
-    scriptId: scriptsDB[key].scriptId,
-    name: scriptsDB[key].name,
-    created: scriptsDB[key].created,
-    paltidxr: scriptsDB[key].paltidxr || false,
-    protection: scriptsDB[key].protection || "standard"
-  }));
-  
-  res.json({ 
-    scripts: scriptList,
-    count: scriptList.length,
-    paltidxr: true,
-    version: "3.0.0"
-  });
+  try {
+    scriptsDB = loadScripts();
+    const scriptList = Object.keys(scriptsDB).map(key => ({
+      id: scriptsDB[key].id,
+      scriptId: scriptsDB[key].scriptId,
+      name: scriptsDB[key].name,
+      created: scriptsDB[key].created,
+      paltidxr: scriptsDB[key].paltidxr || false,
+      protection: scriptsDB[key].protection || "standard"
+    }));
+    
+    res.json({ 
+      scripts: scriptList,
+      count: scriptList.length,
+      paltidxr: true,
+      version: "3.0.0"
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Error loading scripts" });
+  }
 });
 
 app.get("/health", (req, res) => {
-  scriptsDB = loadScripts();
-  const scriptCount = Object.keys(scriptsDB).length;
-  
-  res.json({ 
-    status: "online", 
-    service: "PaltidxR API",
-    version: "3.0.0",
-    scripts: scriptCount,
-    paltidxr: true,
-    protection: "8 layers",
-    timestamp: new Date().toISOString()
-  });
+  try {
+    scriptsDB = loadScripts();
+    const scriptCount = Object.keys(scriptsDB).length;
+    
+    res.json({ 
+      status: "online", 
+      service: "PaltidxR API",
+      version: "3.0.0",
+      scripts: scriptCount,
+      paltidxr: true,
+      protection: "8 layers",
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: "Health check failed" });
+  }
 });
 
+// Crear directorio scripts si no existe
 if (!fs.existsSync(path.join(__dirname, "scripts"))) {
   fs.mkdirSync(path.join(__dirname, "scripts"));
 }
