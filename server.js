@@ -7,8 +7,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const DOMAIN = process.env.DOMAIN || 'paltidxr-p.onrender.com';
 
-app.use(express.json({ limit: '10mb' }));
-app.use(express.text({ limit: '10mb' }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.text({ limit: '50mb' }));
 app.use(express.static(__dirname));
 
 const SCRIPTS_FILE = path.join(__dirname, "scripts.json");
@@ -77,12 +77,12 @@ setInterval(() => {
   }
 }, 5 * 60 * 1000);
 
-// ============ 8 CAPAS DE ENCRIPTACION ============
+// ============ 6 CAPAS DE PROTECCION ============
 
-function layer1_obfuscate(code) {
+// CAPA 1: OFUSCACION
+function obfuscateScript(code) {
   try {
-    let obfuscated = code;
-    obfuscated = obfuscated.replace(/--[^\n]*/g, '');
+    let obfuscated = code.replace(/--[^\n]*/g, '');
     
     const keywords = ['local', 'function', 'if', 'then', 'else', 'elseif', 'end', 'for', 'while', 'do', 'return', 'break', 'true', 'false', 'nil', 'and', 'or', 'not', 'in', 'repeat', 'until', 'goto'];
     const varMap = {};
@@ -90,7 +90,7 @@ function layer1_obfuscate(code) {
     const matches = obfuscated.match(varRegex) || [];
     const uniqueVars = [...new Set(matches)];
     
-    uniqueVars.forEach((v, i) => {
+    uniqueVars.forEach((v) => {
       if (!keywords.includes(v) && v.length > 1) {
         const newName = '_' + crypto.randomBytes(3).toString('hex');
         varMap[v] = newName;
@@ -109,7 +109,8 @@ function layer1_obfuscate(code) {
   }
 }
 
-function layer2_xor(data) {
+// CAPA 2: XOR ENCRYPTION
+function xorEncrypt(data) {
   try {
     const key = crypto.randomBytes(8).toString('hex');
     let result = '';
@@ -124,7 +125,8 @@ function layer2_xor(data) {
   }
 }
 
-function layer3_reverse(data) {
+// CAPA 3: REVERSO
+function reverseString(data) {
   try {
     return data.split('').reverse().join('');
   } catch (e) {
@@ -132,7 +134,8 @@ function layer3_reverse(data) {
   }
 }
 
-function layer4_base64(data) {
+// CAPA 4: BASE64
+function base64Encode(data) {
   try {
     return Buffer.from(data).toString('base64');
   } catch (e) {
@@ -140,19 +143,8 @@ function layer4_base64(data) {
   }
 }
 
-function layer5_aes(data) {
-  try {
-    const key = crypto.randomBytes(16).toString('hex');
-    const cipher = crypto.createCipheriv('aes-128-cbc', Buffer.from(key, 'hex'), Buffer.from(key.substring(0, 16), 'hex'));
-    let encrypted = cipher.update(data, 'utf8', 'base64');
-    encrypted += cipher.final('base64');
-    return key + ':' + encrypted;
-  } catch (e) {
-    return data;
-  }
-}
-
-function layer6_rotate(data) {
+// CAPA 5: ROTACION
+function rotateString(data) {
   try {
     let rotated = '';
     for (let i = 0; i < data.length; i++) {
@@ -165,19 +157,8 @@ function layer6_rotate(data) {
   }
 }
 
-function layer7_binary(data) {
-  try {
-    let binary = '';
-    for (let i = 0; i < data.length; i++) {
-      binary += data.charCodeAt(i).toString(2).padStart(8, '0');
-    }
-    return binary;
-  } catch (e) {
-    return data;
-  }
-}
-
-function layer8_hex(data) {
+// CAPA 6: HEXADECIMAL
+function hexEncode(data) {
   try {
     let hex = '';
     for (let i = 0; i < data.length; i++) {
@@ -189,224 +170,79 @@ function layer8_hex(data) {
   }
 }
 
-// ============ SISTEMAS DE PROTECCION ============
-
-function antiSyntaxProtection(code) {
-  try {
-    let protectedCode = code;
-    protectedCode = protectedCode.replace(/["']/g, '');
-    protectedCode = protectedCode.replace(/;/g, '');
-    protectedCode = protectedCode.replace(/\(/g, ' [ ');
-    protectedCode = protectedCode.replace(/\)/g, ' ] ');
-    protectedCode = protectedCode.replace(/\{/g, ' << ');
-    protectedCode = protectedCode.replace(/\}/g, ' >> ');
-    protectedCode = protectedCode.replace(/\[/g, ' { ');
-    protectedCode = protectedCode.replace(/\]/g, ' } ');
-    protectedCode = protectedCode.replace(/\./g, ' :: ');
-    protectedCode = protectedCode.replace(/,/g, ' , ');
-    protectedCode = protectedCode.replace(/=/g, ' == ');
-    protectedCode = protectedCode.replace(/\+/g, ' ++ ');
-    protectedCode = protectedCode.replace(/-/g, ' -- ');
-    protectedCode = protectedCode.replace(/\*/g, ' ** ');
-    protectedCode = protectedCode.replace(/\//g, ' // ');
-    return protectedCode;
-  } catch (e) {
-    return code;
-  }
-}
-
-function antiHttpGetProtection(code) {
-  try {
-    let protectedCode = code;
-    const replacements = {
-      'game:HttpGet': 'game:GetAsync',
-      'HttpGet': 'HttpRequest',
-      'loadstring': 'load',
-      'pcall': 'xpcall',
-      'spawn': 'delay',
-      'wait': 'task.wait',
-      'print': 'warn',
-      'error': 'assert'
-    };
-    
-    Object.keys(replacements).forEach(key => {
-      const regex = new RegExp(key, 'g');
-      protectedCode = protectedCode.replace(regex, replacements[key]);
-    });
-    
-    return protectedCode;
-  } catch (e) {
-    return code;
-  }
-}
-
-function regenerateAndOrder(code) {
-  try {
-    let lines = code.split('\n');
-    lines = lines.filter(line => line.trim() !== '');
-    
-    for (let i = lines.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [lines[i], lines[j]] = [lines[j], lines[i]];
-    }
-    
-    const regenerator = `
-local function regenerate()
-  local __a = ${Math.random() * 1000}
-  local __b = ${Math.random() * 1000}
-  local __c = ${Math.random() * 1000}
-  return __a + __b + __c
-end
-regenerate()
-`;
-    
-    lines.push(regenerator);
-    return lines.join('\n');
-  } catch (e) {
-    return code;
-  }
-}
-
 // ============ ENCRIPTACION COMPLETA ============
 
 function encryptComplete(script) {
   try {
     let encrypted = script;
-    
-    encrypted = antiSyntaxProtection(encrypted);
-    encrypted = antiHttpGetProtection(encrypted);
-    encrypted = regenerateAndOrder(encrypted);
-    encrypted = layer1_obfuscate(encrypted);
-    encrypted = layer2_xor(encrypted);
-    encrypted = layer3_reverse(encrypted);
-    encrypted = layer4_base64(encrypted);
-    encrypted = layer5_aes(encrypted);
-    encrypted = layer6_rotate(encrypted);
-    encrypted = layer7_binary(encrypted);
-    encrypted = layer8_hex(encrypted);
-    
+    encrypted = obfuscateScript(encrypted);
+    encrypted = xorEncrypt(encrypted);
+    encrypted = reverseString(encrypted);
+    encrypted = base64Encode(encrypted);
+    encrypted = rotateString(encrypted);
+    encrypted = hexEncode(encrypted);
     return encrypted;
   } catch (e) {
     return script;
   }
 }
 
-// ============ DECRYPTOR COMPLETO ============
+// ============ GENERAR DECRYPTOR ============
 
 function generateDecryptor(scriptId, encryptedData) {
   return `
--- PaltidxR Decryptor v3.0
-local function layer8_hex_decrypt(data)
-  local result = ""
-  for i = 1, #data, 2 do
-    result = result .. string.char(tonumber(data:sub(i, i+1), 16))
-  end
-  return result
+local function h2s(s)
+local r=""
+for i=1,#s,2 do
+r=r..string.char(tonumber(s:sub(i,i+1),16))
 end
-
-local function layer7_binary_decrypt(data)
-  local result = ""
-  for i = 1, #data, 8 do
-    local byte = data:sub(i, i+7)
-    result = result .. string.char(tonumber(byte, 2))
-  end
-  return result
+return r
 end
-
-local function layer6_rotate_decrypt(data)
-  local result = ""
-  for i = 1, #data do
-    result = result .. string.char(string.byte(data, i) - 3)
-  end
-  return result
+local function r2s(s)
+local r=""
+for i=1,#s do
+r=r..string.char(string.byte(s,i)-3)
 end
-
-local function layer5_aes_decrypt(data, key)
-  local cipher = require("crypto").createDecipheriv("aes-128-cbc", key, key:sub(1, 16))
-  local decrypted = cipher:update(data, "base64", "utf8")
-  decrypted = decrypted .. cipher:final("utf8")
-  return decrypted
+return r
 end
-
-local function layer4_base64_decrypt(data)
-  return game:HttpDecode(data, "base64")
+local function b2s(s)
+return game:HttpDecode(s,"base64")
 end
-
-local function layer3_reverse_decrypt(data)
-  local result = ""
-  for i = #data, 1, -1 do
-    result = result .. data:sub(i, i)
-  end
-  return result
+local function v2s(s)
+local r=""
+for i=#s,1,-1 do
+r=r..s:sub(i,i)
 end
-
-local function layer2_xor_decrypt(data, key)
-  local parts = {}
-  for part in data:gmatch("[^|]+") do
-    table.insert(parts, part)
-  end
-  local encrypted = game:HttpDecode(parts[2], "base64")
-  local result = ""
-  for i = 1, #encrypted do
-    local charCode = string.byte(encrypted, i)
-    local keyChar = string.byte(key, ((i-1) % #key) + 1)
-    result = result .. string.char(charCode ~ keyChar)
-  end
-  return result
+return r
 end
-
-local function decryptComplete(encrypted)
-  local layer8 = layer8_hex_decrypt(encrypted)
-  local layer7 = layer7_binary_decrypt(layer8)
-  local layer6 = layer6_rotate_decrypt(layer7)
-  
-  local key = layer6:sub(1, 16)
-  local data = layer6:sub(17)
-  local layer5 = layer5_aes_decrypt(data, key)
-  
-  local layer4 = layer4_base64_decrypt(layer5)
-  local layer3 = layer3_reverse_decrypt(layer4)
-  
-  local xorParts = {}
-  for part in layer3:gmatch("[^|]+") do
-    table.insert(xorParts, part)
-  end
-  local layer2 = layer2_xor_decrypt(layer3, xorParts[1])
-  
-  return layer2
+local function x2s(s,k)
+local p={}
+for t in s:gmatch("[^|]+") do
+table.insert(p,t)
 end
-
-local script = decryptComplete("${encryptedData}")
-
-script = script:gsub(" %[ ", "(")
-script = script:gsub(" %] ", ")")
-script = script:gsub(" << ", "{")
-script = script:gsub(" >> ", "}")
-script = script:gsub(" { ", "[")
-script = script:gsub(" } ", "]")
-script = script:gsub(" :: ", ".")
-script = script:gsub(" , ", ",")
-script = script:gsub(" == ", "=")
-script = script:gsub(" ++ ", "+")
-script = script:gsub(" -- ", "-")
-script = script:gsub(" \\*\\* ", "*")
-script = script:gsub(" // ", "/")
-
-local replacements = {
-  ['game:GetAsync'] = 'game:HttpGet',
-  ['HttpRequest'] = 'HttpGet',
-  ['load'] = 'loadstring',
-  ['xpcall'] = 'pcall',
-  ['delay'] = 'spawn',
-  ['task.wait'] = 'wait',
-  ['warn'] = 'print',
-  ['assert'] = 'error'
-}
-for k, v in pairs(replacements) do
-  script = script:gsub(k, v)
+local e=b2s(p[2])
+local r=""
+for i=1,#e do
+local c=string.byte(e,i)
+local kc=string.byte(k,((i-1)%#k)+1)
+r=r..string.char(c~kc)
 end
-
-loadstring(script)()
+return r
+end
+local function d(s)
+local a=h2s(s)
+local b=r2s(a)
+local c=b2s(b)
+local d=v2s(c)
+local p={}
+for t in d:gmatch("[^|]+") do
+table.insert(p,t)
+end
+local e=x2s(d,p[1])
+return e
+end
+local s=d("${encryptedData}")
+loadstring(s)()
 `;
 }
 
@@ -449,140 +285,64 @@ function blockBrowsers(req, res, next) {
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Access Denied</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            background: #0a0b12;
-            font-family: 'Inter', sans-serif;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #e0e0e0;
-            padding: 20px;
-        }
-        .glass-card {
-            background: rgba(20, 21, 31, 0.85);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 24px;
-            padding: 40px;
-            max-width: 600px;
-            width: 100%;
-            text-align: center;
-        }
-        .icon { font-size: 72px; margin-bottom: 16px; }
-        h1 { font-size: 24px; font-weight: 700; color: #ffffff; margin-bottom: 8px; }
-        .subtitle { color: #888; font-size: 14px; margin-bottom: 24px; }
-        .badge {
-            display: inline-block;
-            margin-top: 12px;
-            padding: 4px 16px;
-            background: rgba(139, 92, 246, 0.1);
-            border: 1px solid rgba(139, 92, 246, 0.15);
-            border-radius: 20px;
-            font-size: 11px;
-            color: #a78bfa;
-        }
-        .code-box {
-            background: rgba(9, 10, 18, 0.9);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 12px;
-            padding: 16px 20px;
-            margin-top: 16px;
-            font-family: 'Courier New', monospace;
-            font-size: 13px;
-            color: #a78bfa;
-            word-break: break-all;
-            text-align: left;
-            white-space: pre-wrap;
-            line-height: 1.8;
-            overflow-wrap: break-word;
-        }
-        .btn-copy {
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 10px;
-            padding: 8px 20px;
-            color: #e0e0e0;
-            font-size: 13px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-top: 12px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .btn-copy:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(139, 92, 246, 0.3);
-        }
-        .btn-copy.copied {
-            background: rgba(52, 211, 153, 0.15);
-            border-color: rgba(52, 211, 153, 0.3);
-            color: #34d399;
-        }
-        .footer-link {
-            margin-top: 20px;
-            font-size: 12px;
-            color: #4a4a5a;
-        }
-        .footer-link a {
-            color: #a78bfa;
-            text-decoration: none;
-        }
-        .footer-link a:hover { text-decoration: underline; }
-    </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Access Denied</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0b12;font-family:'Inter',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;color:#e0e0e0;padding:20px}
+.glass-card{background:rgba(20,21,31,0.85);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.06);border-radius:24px;padding:40px;max-width:600px;width:100%;text-align:center}
+.icon{font-size:72px;margin-bottom:16px}
+h1{font-size:24px;font-weight:700;color:#fff;margin-bottom:8px}
+.subtitle{color:#888;font-size:14px;margin-bottom:24px}
+.badge{display:inline-block;padding:4px 16px;background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.15);border-radius:20px;font-size:11px;color:#a78bfa}
+.code-box{background:rgba(9,10,18,0.9);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:16px 20px;margin-top:16px;font-family:'Courier New',monospace;font-size:13px;color:#a78bfa;word-break:break-all;text-align:left;white-space:pre-wrap;line-height:1.8;overflow-wrap:break-word}
+.btn-copy{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:8px 20px;color:#e0e0e0;font-size:13px;cursor:pointer;transition:all 0.3s ease;margin-top:12px;display:inline-flex;align-items:center;gap:8px}
+.btn-copy:hover{background:rgba(255,255,255,0.1);border-color:rgba(139,92,246,0.3)}
+.btn-copy.copied{background:rgba(52,211,153,0.15);border-color:rgba(52,211,153,0.3);color:#34d399}
+.footer-link{margin-top:20px;font-size:12px;color:#4a4a5a}
+.footer-link a{color:#a78bfa;text-decoration:none}
+.footer-link a:hover{text-decoration:underline}
+</style>
 </head>
 <body>
-    <div class="glass-card">
-        <div class="icon">🔒</div>
-        <h1>Access Denied</h1>
-        <p class="subtitle">This content is protected</p>
-        <div class="badge">Protected</div>
-
-        <div class="code-box" id="codeDisplay">${loaderCode}</div>
-
-        <button class="btn-copy" id="copyBtn" onclick="copyCode()">Copy Code</button>
-
-        <div class="footer-link">
-            Protected by PaltidxR<br>
-            <a href="https://${DOMAIN}" target="_blank">https://${DOMAIN}</a>
-        </div>
-    </div>
-
-    <script>
-        const codeToCopy = "${loaderCode}";
-
-        function copyCode() {
-            navigator.clipboard.writeText(codeToCopy).then(() => {
-                const btn = document.getElementById('copyBtn');
-                btn.classList.add('copied');
-                btn.innerHTML = 'Copied!';
-                setTimeout(() => {
-                    btn.classList.remove('copied');
-                    btn.innerHTML = 'Copy Code';
-                }, 2500);
-            }).catch(() => {
-                const textarea = document.createElement('textarea');
-                textarea.value = codeToCopy;
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textarea);
-                const btn = document.getElementById('copyBtn');
-                btn.classList.add('copied');
-                btn.innerHTML = 'Copied!';
-                setTimeout(() => {
-                    btn.classList.remove('copied');
-                    btn.innerHTML = 'Copy Code';
-                }, 2500);
-            });
-        }
-    </script>
+<div class="glass-card">
+<div class="icon">🔒</div>
+<h1>Access Denied</h1>
+<p class="subtitle">This content is protected</p>
+<div class="badge">Protected</div>
+<div class="code-box" id="codeDisplay">${loaderCode}</div>
+<button class="btn-copy" id="copyBtn" onclick="copyCode()">Copy Code</button>
+<div class="footer-link">Protected by PaltidxR<br><a href="https://${DOMAIN}" target="_blank">https://${DOMAIN}</a></div>
+</div>
+<script>
+const codeToCopy = "${loaderCode}";
+function copyCode() {
+navigator.clipboard.writeText(codeToCopy).then(() => {
+const btn = document.getElementById('copyBtn');
+btn.classList.add('copied');
+btn.innerHTML = 'Copied!';
+setTimeout(() => {
+btn.classList.remove('copied');
+btn.innerHTML = 'Copy Code';
+}, 2500);
+}).catch(() => {
+const textarea = document.createElement('textarea');
+textarea.value = codeToCopy;
+document.body.appendChild(textarea);
+textarea.select();
+document.execCommand('copy');
+document.body.removeChild(textarea);
+const btn = document.getElementById('copyBtn');
+btn.classList.add('copied');
+btn.innerHTML = 'Copied!';
+setTimeout(() => {
+btn.classList.remove('copied');
+btn.innerHTML = 'Copy Code';
+}, 2500);
+});
+}
+</script>
 </body>
 </html>
     `);
@@ -621,12 +381,12 @@ function validateScriptId(req, res, next) {
 app.get("/sitemap.xml", (req, res) => {
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://${DOMAIN}/</loc>
-    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>1.0</priority>
-  </url>
+<url>
+<loc>https://${DOMAIN}/</loc>
+<lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+<changefreq>daily</changefreq>
+<priority>1.0</priority>
+</url>
 </urlset>`;
   res.header('Content-Type', 'application/xml');
   res.send(sitemap);
@@ -636,7 +396,6 @@ app.get("/robots.txt", (req, res) => {
   const robots = `User-agent: *
 Allow: /
 Disallow: /files/v1/loaders/
-
 Sitemap: https://${DOMAIN}/sitemap.xml`;
   res.header('Content-Type', 'text/plain');
   res.send(robots);
@@ -654,8 +413,8 @@ app.post("/api/scripts", rateLimiter, (req, res) => {
       return res.status(400).json({ success: false, error: "Script too short or empty" });
     }
     
-    if (script.length > 1000000) {
-      return res.status(400).json({ success: false, error: "Script too large. Maximum 1MB" });
+    if (script.length > 5000000) {
+      return res.status(400).json({ success: false, error: "Script too large. Maximum 5MB" });
     }
     
     let scriptId = generateUniqueId();
@@ -675,8 +434,7 @@ app.post("/api/scripts", rateLimiter, (req, res) => {
       content: encrypted,
       created: new Date().toISOString(),
       paltidxr: true,
-      protection: "8-layers",
-      version: "3.0.0"
+      size: script.length
     };
     
     saveScripts(scriptsDB);
@@ -690,14 +448,16 @@ app.post("/api/scripts", rateLimiter, (req, res) => {
       name: userScriptName,
       created: new Date().toISOString(),
       paltidxr: true,
-      protection: "8 layers encrypted",
-      version: "3.0.0",
-      message: "Script hosted with 8 layers of encryption"
+      size: script.length,
+      message: "Script hosted with 6 layers of encryption"
     });
     
   } catch (error) {
     console.error('Error:', error);
-    res.status(500).json({ success: false, error: "Internal server error: " + error.message });
+    res.status(500).json({ 
+      success: false, 
+      error: "Internal server error: " + error.message 
+    });
   }
 });
 
@@ -713,7 +473,7 @@ app.get("/files/v1/loaders/:scriptId",
       
       if (scriptsDB[scriptId]) {
         const scriptData = scriptsDB[scriptId];
-        console.log(`[${new Date().toISOString()}] Script served: ${scriptId} (${scriptData.name})`);
+        console.log(`[${new Date().toISOString()}] Script served: ${scriptId} (${scriptData.name}) - Size: ${scriptData.size || 'unknown'}`);
         
         const decryptor = generateDecryptor(scriptId, scriptData.content);
         res.type("text").send(decryptor);
@@ -737,7 +497,7 @@ app.get("/api/scripts", rateLimiter, (req, res) => {
       name: scriptsDB[key].name,
       created: scriptsDB[key].created,
       paltidxr: scriptsDB[key].paltidxr || false,
-      protection: scriptsDB[key].protection || "standard"
+      size: scriptsDB[key].size || 0
     }));
     
     res.json({ 
@@ -762,7 +522,7 @@ app.get("/health", (req, res) => {
       version: "3.0.0",
       scripts: scriptCount,
       paltidxr: true,
-      protection: "8 layers",
+      protection: "6 layers",
       timestamp: new Date().toISOString()
     });
   } catch (error) {
@@ -770,7 +530,6 @@ app.get("/health", (req, res) => {
   }
 });
 
-// Crear directorio scripts si no existe
 if (!fs.existsSync(path.join(__dirname, "scripts"))) {
   fs.mkdirSync(path.join(__dirname, "scripts"));
 }
@@ -780,5 +539,5 @@ app.listen(PORT, () => {
   console.log(`Domain: https://${DOMAIN}`);
   console.log(`API: https://${DOMAIN}/api/scripts`);
   console.log(`URL: https://${DOMAIN}/files/v1/loaders/{id}.lua`);
-  console.log(`Protection: 8 layers encryption`);
+  console.log(`Protection: 6 layers encryption`);
 });
