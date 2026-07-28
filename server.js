@@ -115,7 +115,7 @@ function encrypt(s) {
 }
 
 function generateDecryptor(encrypted) {
-  return `local function h(s)local r=""for i=1,#s,2 do r=r..string.char(tonumber(s:sub(i,i+1),16))end return r end local function r(s)local r=""for i=1,#s do r=r..string.char(string.byte(s,i)-3)end return r end local function b(s)return game:HttpDecode(s,"base64")end local function v(s)local r=""for i=#s,1,-1 do r=r..s:sub(i,i)end return r end local function x(s,k)local p={}for t in s:gmatch("[^|]+")do table.insert(p,t)end local e=b(p[2])local r=""for i=1,#e do local c=string.byte(e,i)local kc=string.byte(k,((i-1)%#k)+1)r=r..string.char(c~kc)end return r end local function d(s)local a=h(s)local b=r(a)local c=b(b)local d=v(c)local p={}for t in d:gmatch("[^|]+")do table.insert(p,t)end local e=x(d,p[1])return e end local s=d("${encrypted}")loadstring(s)()`;
+  return 'local function h(s)local r=""for i=1,#s,2 do r=r..string.char(tonumber(s:sub(i,i+1),16))end return r end local function r(s)local r=""for i=1,#s do r=r..string.char(string.byte(s,i)-3)end return r end local function b(s)return game:HttpDecode(s,"base64")end local function v(s)local r=""for i=#s,1,-1 do r=r..s:sub(i,i)end return r end local function x(s,k)local p={}for t in s:gmatch("[^|]+")do table.insert(p,t)end local e=b(p[2])local r=""for i=1,#e do local c=string.byte(e,i)local kc=string.byte(k,((i-1)%#k)+1)r=r..string.char(c~kc)end return r end local function d(s)local a=h(s)local b=r(a)local c=b(b)local d=v(c)local p={}for t in d:gmatch("[^|]+")do table.insert(p,t)end local e=x(d,p[1])return e end local s=d("' + encrypted + '")loadstring(s)()';
 }
 
 // ============ BLOQUEAR BROWSERS ============
@@ -245,12 +245,6 @@ app.get("/sitemap.xml", (req, res) => {
 <changefreq>weekly</changefreq>
 <priority>0.5</priority>
 </url>
-<url>
-<loc>https://${DOMAIN}/api/scripts</loc>
-<lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
-<changefreq>weekly</changefreq>
-<priority>0.5</priority>
-</url>
 </urlset>`;
   res.header('Content-Type', 'application/xml');
   res.send(sitemap);
@@ -313,7 +307,8 @@ app.get("/files/v1/loaders/:id", rateLimiter, blockBrowsers, validateScriptId, (
     db = loadDB();
     if (db[id]) {
       console.log(`[${new Date().toISOString()}] Script served: ${id} (${db[id].name})`);
-      res.type("text").send(generateDecryptor(db[id].content));
+      const decryptor = generateDecryptor(db[id].content);
+      res.type("text").send(decryptor);
     } else {
       res.status(404).send("Script not found");
     }
